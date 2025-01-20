@@ -1,0 +1,14 @@
+---
+title: "Article Summaries"
+format: html
+editor: visual
+self-contained: true
+execute: 
+  warning: false
+  message: false
+bibliography: references.bib
+---
+
+[@ziadi2023]This article focused on the length of productive life (LPL in the article) for female Floridian goats. The article discusses the failures of linear models and random regression linear models when it comes to modeling the LPL. As such, Cox proportional hazards model was chosen because it can handle censored records, time-dependent variables, and skewed distribution of characteristics. The does were classified as censored if they were living and uncensored if they were deceased. A preliminary analysis using likelihood ratio tests on a Weibull hazard survival model. This showed that the effects selected all had a significant effect on LPL. The Cox model is then provided for this specific problem. The results were that the age of the first kidding did significant influence LPL. The article provides tables of their results.
+
+[@zapletal2021] The goal of this paper was to examine how explanatory variables influence on an event and if the estimates of the effects of covariates will differ based on the approach that was selected. This paper in particular focused on the Cox proportional hazard and the competing risks approach. The Cox proportional hazards model provides an unspecified baseline hazard function which is beneficial when dealing with a single outcome of interest or one that does not have a specific cause (equations are provided in article). The article describes which competing risks model is the one that will be used in the modeling section. The predictors used by the author were gender, age when the contract began, and region where the person lived. The particular data used in this article was from a Czech Republic insurance company who provide policies for certain illness events until the event occurs. The insured will receive money if the event occurs, but their contract is then complete. Cox models have an assumption of proportional hazards which means the ratios of the hazards need to be independent of time to use the model. The test used was the zph test using Schoenfield residuals (paper is linked in article) and the hypothesis was rejected for age, but not for gender and region. This resulted in the data being filtered to only individuals 18 or older. Two Cox models were developed for each cause of occurrence (models are provided). R packages were survival and cmprsk. The results of this study were that the Cox model showed that if the cause of the event was not considered, the risk based on gender did not vary. The competing risks model showed differently.
