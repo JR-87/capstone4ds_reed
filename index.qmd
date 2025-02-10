@@ -21,9 +21,45 @@ editor:
 Slides: [slides.html](slides.html){target="_blank"} ( Go to `slides.qmd`
 to edit)
 
-## Introduction
+## Introduction (draft)
 
-The introduction should:
+Analyzing survival data is challenging for traditional machine learning
+models because they struggle to capture the time-to-event nature of the
+data.Survival data typically contains challenges difficult to account
+for because the datasets may be “censored” meaning that the event hasn’t
+had the opportunity to occur yet by the end of the study period. Also,
+traditional methods aren’t able to effectively model time-to-event data
+because they treat time as fixed values opposed to treating the values
+as time leading to less accurate results.
+
+Cox proportional hazards models are commonly used to interpret, analyze,
+and examine survival data. These models specialize in time-to-event
+predictions and can account for multiple variables and their effects on
+survival. Cox proportional hazards models are commonly used in the
+health field while predicting patient survivability based on symptoms
+and medical history, the financial field to predict bank failure, and
+mechanical studies to predict failure of machines. Cox proportional
+hazards models are popular due to their ability to incorporate multiple
+covariates and they have the advantage of being semi-parametric which
+allows more flexibility as compared to other models.
+
+In this paper, we will be examining the prediction of remaining useful
+life (RUL) for NASA turbofan jet engines. The lifespan of a jet engine
+is important as they cost thousands of dollars to maintain and produce.
+The ability to predict the remaining useful lifespan of these engines
+will allow for better judgments on the finances needed to maintain or
+repair them as well as alert teams that an engine may not have the RUL
+for a mission they would like to use it for.
+
+We will first generate the summary statistics for this dataset as well
+as run linear and logistic regression tests. We will then test our
+assumptions which include the proportional hazards assumption, the
+linearity between covariates and the log hazard, that each data is
+independent of each other and there is no omitted data. A model will be
+generated using the survival package from R. We will then test the model
+and make adjustments as needed before generating our predictions.
+
+*Intro guidelines:* The introduction should:
 
 -   Develop a storyline that captures attention and maintains interest.
 
@@ -50,18 +86,6 @@ kernel estimator, weight function is known as kernel function
 [@ziadi2023]*. The insurance[@zapletal2021]*
 
 *This is my work and I want to add more work...*
-
-
-## Introduction (draft)
-
-Analyzing survival data is challenging for traditional machine learning models because they struggle to capture the time-to-event nature of the data.Survival data typically contains challenges difficult to account for because the datasets may be “censored” meaning that the event hasn’t had the opportunity to occur yet by the end of the study period. Also, traditional methods aren’t able to effectively model time-to-event data because they treat time as fixed values opposed to treating the values as time leading to less accurate results.
-
-Cox proportional hazards models are commonly used to interpret, analyze, and examine survival data. These models specialize in time-to-event predictions and can account for multiple variables and their effects on survival. Cox proportional hazards models are commonly used in the health field while predicting patient survivability based on symptoms and medical history, the financial field to predict bank failure, and mechanical studies to predict failure of machines. Cox proportional hazards models are popular due to their ability to incorporate multiple covariates and they have the advantage of being semi-parametric which allows more flexibility as compared to other models.
-
-In this paper, we will be examining the prediction of remaining useful life (RUL)  for NASA turbofan jet engines. The lifespan of a jet engine is important as they cost thousands of dollars to maintain and produce. The ability to predict the remaining useful lifespan of these engines will allow for better judgments on the finances needed to maintain or repair them as well as alert teams that an engine may not have the RUL for a mission they would like to use it for. 
-
-We will first generate the summary statistics for this dataset as well as run linear and logistic regression tests. We will then test our assumptions which include the proportional hazards assumption, the linearity between covariates and the log hazard, that each data is independent of each other and there is no omitted data. A model will be generated using the survival package from R. We will then test the model and make adjustments as needed before generating our predictions.
-
 
 ## Methods
 
