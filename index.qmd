@@ -21,6 +21,9 @@ editor:
 Slides: [slides.html](slides.html){target="_blank"} ( Go to `slides.qmd`
 to edit)
 
+Literature:
+[Literature](https://rawcdn.githack.com/JR-87/capstone4ds_reed/fd31512172dcd07208415a437ec4446f8c2aa5d9/articleSummaries.html)
+
 ## Introduction (draft)
 
 Analyzing survival data is challenging for traditional machine learning
