@@ -18,10 +18,9 @@ editor:
     wrap: 72
 ---
 
-Slides: [slides.html](slides.html){target="_blank"} ( Go to `slides.qmd`
-to edit)
+Slides: [slides.html](slides.html){target="_blank"}
 
-[Literature](articleSummaries.html)
+Literature Comments: [Literature.html](articleSummaries.html)
 
 ## Introduction (take 2)
 
@@ -35,8 +34,8 @@ the medical world is the most obvious use of survival predictions, the
 same methods can be applied to the predicting bank failure, the
 remaining useful life of machines, machinery maintenance timelines, and
 insurance likelihood of payouts. There are various survival methods that
-can be examined, but this paper will focus on Cox proportional hazards
-model. (*don't like)*
+can be examined, including Cox proportional hazards model which will be
+examined in this paper.
 
 Cox proportional hazards (CPH) model is a statistical regression model
 for survival modeling that specializes in time-to-event predictions
@@ -45,10 +44,66 @@ survival. Traditional regression models struggle to capture the
 time-to-event nature of data and treat the time variable as a fixed
 value instead of continuous variable. CPH models are able to overcome
 those obstacles and are capable of dealing with survival data that
-contains censored (events that have not occurred yet in the study
-period) data as well. The models also have the advantage of being
-semi-parametric which allows more flexibility as compared to other
-models.
+contains censored data as well. Censored data is when the information
+about an individual in a study is only known for a certain period of
+time, such as the length of the study [@klein2005, 1]. The models also
+have the advantage of being semi-parametric which allows more
+flexibility as compared to other models.
+
+As mentioned, CPH is used in various fields including the health
+industry, but the usage of the model does not come without challenges. A
+COVID-19 study done using data from a Pakistani hospital noted that the
+model was limited due to the recovery possibility of COVID-19 patients
+as CPH assumes as time goes on, the survival probability will approach
+zero with no survivors. Though CPH was not the best model for this
+study, the results of the model were that individuals who were
+asymptomatic and young had a higher chance of surviving the virus
+[@asghar2024]. In 2024, a study was done in the US on the relationship
+between chest pain occurring and mortality of the person experiencing
+chest pain using CPH. A response to that study was written that provided
+the limitations of CPH with the biggest concern being the assumption of
+constant hazards ratio that CPH relies on for the model. In the heart
+study, the effect of Triglyceride-Glucose was assumed to be a constant,
+but is actually a value that fluctuates over time along with an
+individual's body weight and blood glucose levels. As such, the model
+would struggle to predict correctly the effect of Triglyceride-Glucose
+given the violation of the constant hazards ratio [@jiang2024].
+
+An additional limitation of CPH comes from the data in the covariaties
+selected and how can they can become biased. Two studies done using UK
+health data demonstrated how bias can impact the values for the
+covariates when relying on patient submitted information. The first was
+a study on the connection between salt intake and the development of
+anxiety or depression after 14.5 years [@wang2025] and the second was a
+study on the association between postpartum depression and the
+development of two or more chronic diseases [@zhang2025]. Both of those
+studies relied on patient submitted health data and survey responses
+that were supplemented with death records and other accessible health
+records thus creating a possible bias in their data which could
+negatively influence their model as their covariates may not have
+accurately reflected the true data. These articles provide examples of
+the care that needs to be taken when working with CPH models.
+
+While health care is the dominate field in which CPH is used, a study in
+2021 provides an example of using CPH in insurance fields. An insurance
+company in the Czech Republic provides policies for certain illness
+events until the event occurs when the insured will receive money and
+their contract is complete. To assist the company with predicting if an
+individual will have one of the illness events occur, a model using CPH
+was generated using gender, age, and region as the
+covariates[@zapletal2021]. A study in 2023 focused on the length of
+productive life of female Floridian goats to determine the factors that
+would impact the longevity of the goats. CPH was used to determine that
+the age of first kidding and the specific herd impacts the length of
+productive life of the goats [@ziadi2023]. Both of these studies provide
+examples of the reaches of CPH models outside the health industry.
+
+Continuing with using CPH outside of health data, we will study the
+remaining useful life of a NASA aircraft engine using data provided by
+NASA for the study on propagation modeling [@saxena2008]. From the
+literature review, we have noted that we will need to be concerned with
+the constant hazards ratio within our data and determine how we will
+censor our data.
 
 ## Introduction (draft)
 
@@ -88,33 +143,7 @@ independent of each other and there is no omitted data. A model will be
 generated using the survival package from R. We will then test the model
 and make adjustments as needed before generating our predictions.
 
-*Intro guidelines:* The introduction should:
-
--   Develop a storyline that captures attention and maintains interest.
-
--   Your audience is your peers
-
--   Clearly state the problem or question you're addressing.
-
 <!-- -->
-
--   Introduce why it is relevant needs.
-
--   Provide an overview of your approach.
-
-Example of writing including citing references:
-
-*This is an introduction to ..... regression, which is a non-parametric
-estimator that estimates the conditional expectation of two variables
-which is random. The goal of a kernel regression is to discover the
-non-linear relationship between two random variables. To discover the
-non-linear relationship, kernel estimator or kernel smoothing is the
-main method to estimate the curve for non-parametric statistics. In
-kernel estimator, weight function is known as kernel function
-[@efr2008]. Cite this paper [@bro2014principal]. The goat study*
-[@ziadi2023]*. The insurance[@zapletal2021]*
-
-*This is my work and I want to add more work...*
 
 ## Methods
 

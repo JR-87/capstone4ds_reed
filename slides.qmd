@@ -1,7 +1,7 @@
 ---
-title: "Cox Proportional Hazards Model"
-subtitle: "Temp"
-author: "Jayme Reed (Advisor: Dr. Cohen)"
+title: "Predicting Remaining Useful Life of NASA Aircraft Engines "
+subtitle: "Using Cox Proportional Hazards Model"
+author: "Jayme Reed & Brad Paton (Advisor: Dr. Cohen)"
 date: '`r Sys.Date()`'
 format:
   revealjs
