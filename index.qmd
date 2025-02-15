@@ -1,6 +1,6 @@
 ---
-title: "Cox Proportional Hazards Model"
-subtitle: "Temp"
+title: "Predicting Remaining Useful Life of NASA Aircraft Engines "
+subtitle: "Using Cox Proportional Hazards Model"
 author: "Jayme Reed & Brad Paton (Advisor: Dr. Cohen)"
 date: '`r Sys.Date()`'
 format:
@@ -21,14 +21,40 @@ editor:
 Slides: [slides.html](slides.html){target="_blank"} ( Go to `slides.qmd`
 to edit)
 
-Literature:
-[Literature](https://rawcdn.githack.com/JR-87/capstone4ds_reed/fd31512172dcd07208415a437ec4446f8c2aa5d9/articleSummaries.html)
+[Literature](articleSummaries.html)
+
+## Introduction (take 2)
+
+As the COVID-19 pandemic demonstrated, the ability to predict the
+survival of a patient based on their symptoms and medical history is a
+major benefit as society deals with health crisis like pandemics. Those
+predictions would assist medical practitioners in triage and allow
+researchers the ability to generate predictions on the individuals who
+are at the greatest risk of losing their lives due to an illness. While
+the medical world is the most obvious use of survival predictions, the
+same methods can be applied to the predicting bank failure, the
+remaining useful life of machines, machinery maintenance timelines, and
+insurance likelihood of payouts. There are various survival methods that
+can be examined, but this paper will focus on Cox proportional hazards
+model. (*don't like)*
+
+Cox proportional hazards (CPH) model is a statistical regression model
+for survival modeling that specializes in time-to-event predictions
+using using single or multiple covariates and the effects they have on
+survival. Traditional regression models struggle to capture the
+time-to-event nature of data and treat the time variable as a fixed
+value instead of continuous variable. CPH models are able to overcome
+those obstacles and are capable of dealing with survival data that
+contains censored (events that have not occurred yet in the study
+period) data as well. The models also have the advantage of being
+semi-parametric which allows more flexibility as compared to other
+models.
 
 ## Introduction (draft)
 
 Analyzing survival data is challenging for traditional machine learning
 models because they struggle to capture the time-to-event nature of the
-data.Survival data typically contains challenges difficult to account
+data. Survival data typically contains challenges difficult to account
 for because the datasets may be “censored” meaning that the event hasn’t
 had the opportunity to occur yet by the end of the study period. Also,
 traditional methods aren’t able to effectively model time-to-event data
