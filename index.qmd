@@ -5,6 +5,9 @@ author: "Jayme Reed & Brad Paton (Advisor: Dr. Cohen)"
 date: '`r Sys.Date()`'
 format:
   html:
+    theme: spacelab
+    toc: true
+    toc-depth: 3
     code-fold: true
 course: Capstone Projects in Data Science
 bibliography: references.bib # file contains bibtex for references
@@ -22,7 +25,8 @@ Slides: [slides.html](slides.html){target="_blank"}
 
 Literature Comments: [Literature.html](articleSummaries.html)
 
-## Introduction (take 3) 
+
+## Introduction (take 3)
 
 As the COVID-19 pandemic demonstrated, the ability to predict the
 survival of a patient based on their symptoms and medical history is a
@@ -37,9 +41,10 @@ insurance likelihood of payouts. There are various survival methods that
 can be examined, including Cox proportional hazards model which will be
 examined in this paper.
 
+
 Cox proportional hazards (CPH) models are statistical regression models specializing in
 modeling time-to-event predictions with survival data. Survival data is data with a value
-for time and an event. For example, in a study investigating the survival likelihood of
+for time and an event.[@Abeysekera2009] For example, in a study investigating the survival likelihood of
 mechanical equipment time would begin when the equipment begins functioning and would
 conclude in the event the equipment stops functioning. [@Smith2003] CPH models can use
 single or multiple covariates as a means of creating predictions until failure and are

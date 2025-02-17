@@ -35,6 +35,8 @@ This article describes a Cox Proportional Hazards Model to predict the probabili
 
 [@Kuitunen2021]
 
+https://link.springer.com/article/10.1186/s12891-021-04379-2
+
 This article explores the proportionality assumption of cox proportional hazard models on arthroplasty research datasets. It accounts for over 1100 studies. The article concludes that the proportionality assumption cannot be ignored, as without it the results of the models created are unreliable. It is critical for the proportional hazards assumption to be tested properly, or inaccurate predictions will be made,
 
 [@Smith2003]
@@ -42,6 +44,8 @@ This article explores the proportionality assumption of cox proportional hazard 
 In this article, Cox Proportional Hazard modeling was used for modeling time until event while accounting for other variables. The author explains how Cox PH models work mathematically and the strenths of Cox PH models. Cox PH models are able to accomodate incomplete or "censored" data which is prevalent in survival data. In many clinical trials, a patient death may not be observed because the trial period will end not allowing enough time for the event to occur. Health datasets were analyzed with hospitalization and demographic data to predict hospitalization time after inhaling oil well fire smoke. The model creates a probability for each individual's chances of being hospitalized. 
 
 [@Abeysekera2009]
+
+https://www.researchgate.net/publication/238483310_Use_of_Schoenfeld's_global_test_to_test_the_proportional_hazards_assumption_in_the_Cox_proportional_hazards_model_An_application_to_a_clinical_study
 
 This article summarizes the use of Shoenfeld's global test for testing assumptions of Cox PH models. It mentions that other methods for checking assumptions have an aspect of subjectivity to them, but this method shines because it does not. The proportional hazards assumption is the most important aspect of a dataset when trying to analyze data with a Cox PH model, and the Schoenfeld's global test is an effective method to test the assumption. The article includes visualizations and ways to interpret the visuals. The example provided in the paper shows the conclusion of which covariates were shown to be in violation of the assumption in a better way than typical methods. The article recommends Shoenfeld's global test as the ideal method for testing assumptions.
 
