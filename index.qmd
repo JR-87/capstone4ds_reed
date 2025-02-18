@@ -25,13 +25,12 @@ Slides: [slides.html](slides.html){target="_blank"}
 
 Literature Comments: [Literature.html](articleSummaries.html)
 
-
-## Introduction (take 3)
+## Introduction
 
 As the COVID-19 pandemic demonstrated, the ability to predict the
 survival of a patient based on their symptoms and medical history is a
-major benefit as society deals with health crises such as pandemics. Those
-predictions would assist medical practitioners in triage and allow
+major benefit as society deals with health crises such as pandemics.
+Those predictions would assist medical practitioners in triage and allow
 researchers the ability to generate predictions on the individuals who
 are at the greatest risk of losing their lives due to an illness. While
 the medical world is the most obvious use of survival predictions, the
@@ -41,20 +40,22 @@ insurance likelihood of payouts. There are various survival methods that
 can be examined, including Cox proportional hazards model which will be
 examined in this paper.
 
+Cox proportional hazards (CPH) models are statistical regression models
+specializing in modeling time-to-event predictions with survival data.
+Survival data is data with a value for time and an event
+[@Abeysekera2009]. For example, in a study investigating the survival
+likelihood of mechanical equipment, the time value would begin when the
+equipment begins functioning and would conclude in the event the
+equipment stops functioning [@Smith2003]. CPH models can use single or
+multiple covariates as a means of creating predictions until failure and
+are capable of dealing with survival data that contains censored data as
+well [@Seung2023]. Censored data is when the information about an
+individual in a study is only known for a certain period of time, such
+as the length of the study [@klein2005, 1]. The models also have the
+advantage of being semi-parametric which allows more flexibility as
+compared to other models [@Ming-Chiang2014].
 
-Cox proportional hazards (CPH) models are statistical regression models specializing in
-modeling time-to-event predictions with survival data. Survival data is data with a value
-for time and an event.[@Abeysekera2009] For example, in a study investigating the survival likelihood of
-mechanical equipment time would begin when the equipment begins functioning and would
-conclude in the event the equipment stops functioning. [@Smith2003] CPH models can use
-single or multiple covariates as a means of creating predictions until failure and are
-capable of dealing with survival data that contains censored data as well.[@Seung2023]
-Censored data is when the information about an individual in a study is only known for a
-certain period of time, such as the length of the study [@klein2005, 1]. The models also
-have the advantage of being semi-parametric which allows more flexibility as compared to
-other models. [@Ming-Chiang2014] 
-
-As mentioned, CPH is used in various fields including the health
+As mentioned, CPH is used in various fields, primarily the health
 industry, but the usage of the model does not come without challenges. A
 COVID-19 study done using data from a Pakistani hospital noted that the
 model was limited due to the recovery possibility of COVID-19 patients
@@ -108,127 +109,6 @@ NASA for the study on propagation modeling [@saxena2008]. From the
 literature review, we have noted that we will need to be concerned with
 the constant hazards ratio within our data and determine how we will
 accommodate censored data when creating our model.
-
-## Introduction (take 2)
-
-As the COVID-19 pandemic demonstrated, the ability to predict the
-survival of a patient based on their symptoms and medical history is a
-major benefit as society deals with health crisis like pandemics. Those
-predictions would assist medical practitioners in triage and allow
-researchers the ability to generate predictions on the individuals who
-are at the greatest risk of losing their lives due to an illness. While
-the medical world is the most obvious use of survival predictions, the
-same methods can be applied to the predicting bank failure, the
-remaining useful life of machines, machinery maintenance timelines, and
-insurance likelihood of payouts. There are various survival methods that
-can be examined, including Cox proportional hazards model which will be
-examined in this paper.
-
-Cox proportional hazards (CPH) model is a statistical regression model
-for survival modeling that specializes in time-to-event predictions
-using using single or multiple covariates and the effects they have on
-survival. Traditional regression models struggle to capture the
-time-to-event nature of data and treat the time variable as a fixed
-value instead of continuous variable. CPH models are able to overcome
-those obstacles and are capable of dealing with survival data that
-contains censored data as well. Censored data is when the information
-about an individual in a study is only known for a certain period of
-time, such as the length of the study [@klein2005, 1]. The models also
-have the advantage of being semi-parametric which allows more
-flexibility as compared to other models.
-
-As mentioned, CPH is used in various fields including the health
-industry, but the usage of the model does not come without challenges. A
-COVID-19 study done using data from a Pakistani hospital noted that the
-model was limited due to the recovery possibility of COVID-19 patients
-as CPH assumes as time goes on, the survival probability will approach
-zero with no survivors. Though CPH was not the best model for this
-study, the results of the model were that individuals who were
-asymptomatic and young had a higher chance of surviving the virus
-[@asghar2024]. In 2024, a study was done in the US on the relationship
-between chest pain occurring and mortality of the person experiencing
-chest pain using CPH. A response to that study was written that provided
-the limitations of CPH with the biggest concern being the assumption of
-constant hazards ratio that CPH relies on for the model. In the heart
-study, the effect of Triglyceride-Glucose was assumed to be a constant,
-but is actually a value that fluctuates over time along with an
-individual's body weight and blood glucose levels. As such, the model
-would struggle to predict correctly the effect of Triglyceride-Glucose
-given the violation of the constant hazards ratio [@jiang2024].
-
-An additional limitation of CPH comes from the data in the covariaties
-selected and how can they can become biased. Two studies done using UK
-health data demonstrated how bias can impact the values for the
-covariates when relying on patient submitted information. The first was
-a study on the connection between salt intake and the development of
-anxiety or depression after 14.5 years [@wang2025] and the second was a
-study on the association between postpartum depression and the
-development of two or more chronic diseases [@zhang2025]. Both of those
-studies relied on patient submitted health data and survey responses
-that were supplemented with death records and other accessible health
-records thus creating a possible bias in their data which could
-negatively influence their model as their covariates may not have
-accurately reflected the true data. These articles provide examples of
-the care that needs to be taken when working with CPH models.
-
-While health care is the dominate field in which CPH is used, a study in
-2021 provides an example of using CPH in insurance fields. An insurance
-company in the Czech Republic provides policies for certain illness
-events until the event occurs when the insured will receive money and
-their contract is complete. To assist the company with predicting if an
-individual will have one of the illness events occur, a model using CPH
-was generated using gender, age, and region as the
-covariates[@zapletal2021]. A study in 2023 focused on the length of
-productive life of female Floridian goats to determine the factors that
-would impact the longevity of the goats. CPH was used to determine that
-the age of first kidding and the specific herd impacts the length of
-productive life of the goats [@ziadi2023]. Both of these studies provide
-examples of the reaches of CPH models outside the health industry.
-
-Continuing with using CPH outside of health data, we will study the
-remaining useful life of a NASA aircraft engine using data provided by
-NASA for the study on propagation modeling [@saxena2008]. From the
-literature review, we have noted that we will need to be concerned with
-the constant hazards ratio within our data and determine how we will
-censor our data.
-
-## Introduction (draft)
-
-Analyzing survival data is challenging for traditional machine learning
-models because they struggle to capture the time-to-event nature of the
-data. Survival data typically contains challenges difficult to account
-for because the datasets may be “censored” meaning that the event hasn’t
-had the opportunity to occur yet by the end of the study period. Also,
-traditional methods aren’t able to effectively model time-to-event data
-because they treat time as fixed values opposed to treating the values
-as time leading to less accurate results.
-
-Cox proportional hazards models are commonly used to interpret, analyze,
-and examine survival data. These models specialize in time-to-event
-predictions and can account for multiple variables and their effects on
-survival. Cox proportional hazards models are commonly used in the
-health field while predicting patient survivability based on symptoms
-and medical history, the financial field to predict bank failure, and
-mechanical studies to predict failure of machines. Cox proportional
-hazards models are popular due to their ability to incorporate multiple
-covariates and they have the advantage of being semi-parametric which
-allows more flexibility as compared to other models.
-
-In this paper, we will be examining the prediction of remaining useful
-life (RUL) for NASA turbofan jet engines. The lifespan of a jet engine
-is important as they cost thousands of dollars to maintain and produce.
-The ability to predict the remaining useful lifespan of these engines
-will allow for better judgments on the finances needed to maintain or
-repair them as well as alert teams that an engine may not have the RUL
-for a mission they would like to use it for.
-
-We will first generate the summary statistics for this dataset as well
-as run linear and logistic regression tests. We will then test our
-assumptions which include the proportional hazards assumption, the
-linearity between covariates and the log hazard, that each data is
-independent of each other and there is no omitted data. A model will be
-generated using the survival package from R. We will then test the model
-and make adjustments as needed before generating our predictions.
 
 <!-- -->
 
