@@ -110,7 +110,23 @@ literature review, we have noted that we will need to be concerned with
 the constant hazards ratio within our data and determine how we will
 accommodate censored data when creating our model.
 
-<!-- -->
+We will be using the test_FD002 and train_FD002 datasets available for download at
+[NASA's Open Data Portal](https://data.nasa.gov/Aerospace/CMAPSS-Jet-Engine-Simulated-Data/ff5v-kuh6/about_data) and also avaialble on the home page of our [GitHub repository](https://github.com/JR-87/capstone4ds_reed).
+
+
+```{r}
+testurl <- 'https://raw.githubusercontent.com/JR-87/capstone4ds_reed/refs/heads/main/test_FD002.txt'
+
+test <- read.table(testurl, header = TRUE, sep = '')
+head(test)
+```
+```{r}
+trainurl <- 'https://raw.githubusercontent.com/JR-87/capstone4ds_reed/refs/heads/main/train_FD002.txt'
+
+test <- read.table(trainurl, header = TRUE, sep = '')
+head(test)
+```
+
 
 ## Methods
 
