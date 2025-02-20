@@ -21,9 +21,8 @@ editor:
     wrap: 72
 ---
 
-Slides: [slides.html](slides.html){target="_blank"}
-
-Literature Comments: [Literature.html](articleSummaries.html)
+[Slides](slides.html){target="_blank"} \|
+[Literature](articleSummaries.html)
 
 ## Introduction
 
@@ -34,10 +33,10 @@ Those predictions would assist medical practitioners in triage and allow
 researchers the ability to generate predictions on the individuals who
 are at the greatest risk of losing their lives due to an illness. While
 the medical world is the most obvious use of survival predictions, the
-same methods can be applied to the predicting bank failure, the
-remaining useful life of machines, machinery maintenance timelines, and
-insurance likelihood of payouts. There are various survival methods that
-can be examined, including Cox proportional hazards model which will be
+same methods can be applied to predicting bank failure, the remaining
+useful life of machines, machinery maintenance timelines, and insurance
+likelihood of payouts. There are various survival methods that can be
+examined, including Cox proportional hazards model which will be
 examined in this paper.
 
 Cox proportional hazards (CPH) models are statistical regression models
@@ -75,7 +74,7 @@ would struggle to predict correctly the effect of Triglyceride-Glucose
 given the violation of the constant hazards ratio [@jiang2024].
 
 An additional limitation of CPH comes from the data in the covariates
-selected and how can they can become biased. Two studies done using UK
+selected and how they can become biased. Two studies done using UK
 health data demonstrated how bias can impact the values for the
 covariates when relying on patient submitted information. The first was
 a study on the connection between salt intake and the development of
@@ -89,7 +88,7 @@ negatively influence their model as their covariates may not have
 accurately reflected the true data. These articles provide examples of
 the care that needs to be taken when working with CPH models.
 
-While health care is the dominate field in which CPH is used, a study in
+While health care is the dominant field in which CPH is used, a study in
 2021 provides an example of using CPH in insurance fields. An insurance
 company in the Czech Republic provides policies for certain illness
 events until the event occurs when the insured will receive money and
@@ -103,6 +102,7 @@ the age of first kidding and the specific herd impacts the length of
 productive life of the goats [@ziadi2023]. Both of these studies provide
 examples of the reaches of CPH models outside the health industry.
 
+<<<<<<< HEAD
 Continuing with using CPH outside of health data, we will study the
 remaining useful life of a NASA aircraft engine using data provided by
 NASA for the study on propagation modeling [@saxena2008]. From the
@@ -163,6 +163,22 @@ ggplot(data = distributions,
 
 
 
+=======
+CPH has the capability to be applied to many fields, though it poses
+some limitations. The constant hazards ratio and determining how to
+censor data are two concerns that can lead to limitations in using CPH
+for models. In addition, the necessity of a time to event value within
+the data source is something that needs to be taken into consideration
+when choosing to use CPH. Without that value, using CPH as a survival
+model will not be the appropriate method to take with that particular
+data. This value is also what makes CPH a prime modeling candidate with
+health data as health metrics frequently have a time component to them,
+especially when comparing someone over a period of time in a health
+study as is done with medications and the development of cancer or other
+illnesses. However, while the usage of CPH is clear in the medical
+field, this paper will demonstrate using CPH within the field of
+mechanics and remaining useful life of a machine.
+>>>>>>> 6495dacc416926e090ed60174ae8b3e2a4e87331
 
 ## Methods
 
@@ -195,44 +211,42 @@ $$
 
 ### Data Exploration and Visualization
 
+Though CPH is typically used with health data, we wanted to determine
+how CPH can be used in other fields. As such, we will study the
+remaining useful life of a NASA aircraft engine using data provided by
+NASA for the study on propagation modeling [@saxena2008]. In particular,
+we will be examining their data from what they have deemed engine two.
+From the literature review, we have noted that we will need to be
+concerned with the constant hazards ratio within our data and determine
+how we will accommodate censored data when creating our model.
+
+We will be using the test_FD002 and train_FD002 datasets available for
+download at [NASA's Open Data
+Portal](https://data.nasa.gov/Aerospace/CMAPSS-Jet-Engine-Simulated-Data/ff5v-kuh6/about_data)
+and also available on the home page of our [GitHub
+repository](https://github.com/JR-87/capstone4ds_reed).
+
+```{r}
+testurl <- 'https://raw.githubusercontent.com/JR-87/capstone4ds_reed/refs/heads/main/test_FD002.txt'  
+test <- read.table(testurl, header = TRUE, sep = '')
+head(test)
+```
+
+```{r}
+trainurl <- 'https://raw.githubusercontent.com/JR-87/capstone4ds_reed/refs/heads/main/train_FD002.txt'  
+test <- read.table(trainurl, header = TRUE, sep = '') 
+head(test)
+```
+
+## 
+
 -   Describe your data sources and collection process.
 
 -   Present initial findings and insights through visualizations.
 
 -   Highlight unexpected patterns or anomalies.
 
-A study was conducted to determine how...
-
-```{r, warning=FALSE, echo=T, message=FALSE}
-# loading packages 
-library(tidyverse)
-library(knitr)
-library(ggthemes)
-library(ggrepel)
-library(dslabs)
-```
-
-```{r, warning=FALSE, echo=TRUE}
-# Load Data
-kable(head(murders))
-
-ggplot1 = murders %>% ggplot(mapping = aes(x=population/10^6, y=total)) 
-
-  ggplot1 + geom_point(aes(col=region), size = 4) +
-  geom_text_repel(aes(label=abb)) +
-  scale_x_log10() +
-  scale_y_log10() +
-  geom_smooth(formula = "y~x", method=lm,se = F)+
-  xlab("Populations in millions (log10 scale)") + 
-  ylab("Total number of murders (log10 scale)") +
-  ggtitle("US Gun Murders in 2010") +
-  scale_color_discrete(name = "Region")+
-      theme_bw()
-  
-
-```
-
-### Modeling and Results
+A study was conducted to determine how...Modeling and Results
 
 -   Explain your data preprocessing and cleaning steps.
 
