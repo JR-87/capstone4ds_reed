@@ -110,9 +110,13 @@ literature review, we have noted that we will need to be concerned with
 the constant hazards ratio within our data and determine how we will
 accommodate censored data when creating our model.
 
-We will be using the test_FD002 and train_FD002 datasets available for download at
-[NASA's Open Data Portal](https://data.nasa.gov/Aerospace/CMAPSS-Jet-Engine-Simulated-Data/ff5v-kuh6/about_data) and also avaialble on the home page of our [GitHub repository](https://github.com/JR-87/capstone4ds_reed).
+From NASA's Open Data Portal CMAPSS Jet Engine Simulated Data we will be using the test_FD002 and train_FD002 datasets available for download at
+[NASA's Open Data Portal](https://data.nasa.gov/Aerospace/CMAPSS-Jet-Engine-Simulated-Data/ff5v-kuh6/about_data) and also available on the home page of our [GitHub repository](https://github.com/JR-87/capstone4ds_reed).
 
+These datasets contain time series data for the survival time of different engines under different conditions. The conditions are represented by three operational setting fields and 21 senor measurement fields.
+
+
+Headers of the train and test data are below.
 
 ```{r}
 testurl <- 'https://raw.githubusercontent.com/JR-87/capstone4ds_reed/refs/heads/main/test_FD002.txt'
@@ -120,12 +124,44 @@ testurl <- 'https://raw.githubusercontent.com/JR-87/capstone4ds_reed/refs/heads/
 test <- read.table(testurl, header = TRUE, sep = '')
 head(test)
 ```
+
 ```{r}
 trainurl <- 'https://raw.githubusercontent.com/JR-87/capstone4ds_reed/refs/heads/main/train_FD002.txt'
 
-test <- read.table(trainurl, header = TRUE, sep = '')
+train <- read.table(trainurl, header = TRUE, sep = '')
 head(test)
 ```
+
+The visual below shows a histogram with distributions of survival times of the 260 unique engines in the training data.
+
+
+```{r, echo=FALSE}
+library(tidyverse)
+
+distributions <- train %>% 
+  group_by(id) %>%
+  summarise(time = max(time))
+  
+
+ggplot(data = distributions,
+       aes(x = time)) +
+  geom_histogram(binwidth = 5,
+                 fill = "grey")+
+  labs(title = "Survival Time Distribution",
+       x = "Survival Time",
+       y = "Frequency")+
+  theme_bw()+
+  theme(plot.title = element_text(hjust = .5))
+
+```
+
+
+
+
+
+
+
+
 
 
 ## Methods
