@@ -26,6 +26,7 @@ editor:
 
 ## Introduction
 
+*Background*
 As the COVID-19 pandemic demonstrated, the ability to predict the
 survival of a patient based on their symptoms and medical history is a
 major benefit as society deals with health crises such as pandemics.
@@ -110,8 +111,11 @@ literature review, we have noted that we will need to be concerned with
 the constant hazards ratio within our data and determine how we will
 accommodate censored data when creating our model.
 
+*Data*
 From NASA's Open Data Portal CMAPSS Jet Engine Simulated Data we will be using the test_FD002 and train_FD002 datasets available for download at
-[NASA's Open Data Portal](https://data.nasa.gov/Aerospace/CMAPSS-Jet-Engine-Simulated-Data/ff5v-kuh6/about_data) and also available on the home page of our [GitHub repository](https://github.com/JR-87/capstone4ds_reed).
+[NASA's Open Data Portal](https://data.nasa.gov/Aerospace/CMAPSS-Jet-Engine-Simulated-Data/ff5v-kuh6/about_data).[@NASA_CMAPSS]
+
+-----add where data was collected from------
 
 These datasets contain time series data for the survival time of different engines under different conditions. The conditions are represented by three operational setting fields and 21 senor measurement fields.
 
@@ -181,6 +185,20 @@ mechanics and remaining useful life of a machine.
 >>>>>>> 6495dacc416926e090ed60174ae8b3e2a4e87331
 
 ## Methods
+
+
+How coxph was created and creator what it was made for. it is semi parametric regression
+
+explain mathematically with equation
+
+How data needs to be formatted - time + event and covariates
+
+how it works
+
+assumptions - how to test assumptions
+
+
+
 
 -   Detail the models or algorithms used.
 
