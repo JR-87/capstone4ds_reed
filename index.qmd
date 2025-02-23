@@ -111,13 +111,29 @@ literature review, we have noted that we will need to be concerned with
 the constant hazards ratio within our data and determine how we will
 accommodate censored data when creating our model.
 
+=======
+CPH has the capability to be applied to many fields, though it poses
+some limitations. The constant hazards ratio and determining how to
+censor data are two concerns that can lead to limitations in using CPH
+for models. In addition, the necessity of a time to event value within
+the data source is something that needs to be taken into consideration
+when choosing to use CPH. Without that value, using CPH as a survival
+model will not be the appropriate method to take with that particular
+data. This value is also what makes CPH a prime modeling candidate with
+health data as health metrics frequently have a time component to them,
+especially when comparing someone over a period of time in a health
+study as is done with medications and the development of cancer or other
+illnesses. However, while the usage of CPH is clear in the medical
+field, this paper will demonstrate using CPH within the field of
+mechanics and remaining useful life of a machine.
+>>>>>>> 6495dacc416926e090ed60174ae8b3e2a4e87331
+
+
 *Data*
 From NASA's Open Data Portal CMAPSS Jet Engine Simulated Data we will be using the test_FD002 and train_FD002 datasets available for download at
-[NASA's Open Data Portal](https://data.nasa.gov/Aerospace/CMAPSS-Jet-Engine-Simulated-Data/ff5v-kuh6/about_data).[@NASA_CMAPSS]
+[NASA's Open Data Portal](https://data.nasa.gov/Aerospace/CMAPSS-Jet-Engine-Simulated-Data/ff5v-kuh6/about_data).
 
------add where data was collected from------
-
-These datasets contain time series data for the survival time of different engines under different conditions. The conditions are represented by three operational setting fields and 21 senor measurement fields.
+Each engine has an unknown amount of wear, manufacturing variation, and sensor noise all of which impact the survival time. In the training dataset, each engine is operating normally at the beginning of the time series, develops a fault, and experiences failure at the end of the time series. The conditions the engines are subjected to are represented by three operational setting fields and 21 sensor measurement fields. In the testing data, the engines have not experienced failure.[@NASA_CMAPSS]
 
 
 Headers of the train and test data are below.
@@ -136,7 +152,7 @@ train <- read.table(trainurl, header = TRUE, sep = '')
 head(test)
 ```
 
-The visual below shows a histogram with distributions of survival times of the 260 unique engines in the training data.
+The visual below shows a histogram and a box plot representing distributions of survival times of the 260 unique engines in the training data.
 
 
 ```{r, echo=FALSE}
@@ -147,42 +163,33 @@ distributions <- train %>%
   summarise(time = max(time))
   
 
-ggplot(data = distributions,
+Histogram <- ggplot(data = distributions,
        aes(x = time)) +
   geom_histogram(binwidth = 5,
                  fill = "grey")+
-  labs(title = "Survival Time Distribution",
-       x = "Survival Time",
+  labs(x = "Survival Time",
        y = "Frequency")+
-  theme_bw()+
-  theme(plot.title = element_text(hjust = .5))
+  theme_bw()
+
+box <- ggplot(data = distributions,
+                  aes(y = time))+
+  geom_boxplot(fill = "gray",
+               color = "black")+
+  theme_bw()
+
+library(gridExtra)
+
+grid.arrange(Histogram,box,ncol = 2, top = "Distribution of Engine Longevity in Training Data")
 
 ```
 
+```{r}
+summary(distributions$time)
 
+sd(distributions$time)
+```
+The engines have a median survival time of 199 iterations with a standard deviation of 46.8. The longest surviving engine lasted 378 iterations, with the shortest survival time for all engines being 128.
 
-
-
-
-
-
-
-=======
-CPH has the capability to be applied to many fields, though it poses
-some limitations. The constant hazards ratio and determining how to
-censor data are two concerns that can lead to limitations in using CPH
-for models. In addition, the necessity of a time to event value within
-the data source is something that needs to be taken into consideration
-when choosing to use CPH. Without that value, using CPH as a survival
-model will not be the appropriate method to take with that particular
-data. This value is also what makes CPH a prime modeling candidate with
-health data as health metrics frequently have a time component to them,
-especially when comparing someone over a period of time in a health
-study as is done with medications and the development of cancer or other
-illnesses. However, while the usage of CPH is clear in the medical
-field, this paper will demonstrate using CPH within the field of
-mechanics and remaining useful life of a machine.
->>>>>>> 6495dacc416926e090ed60174ae8b3e2a4e87331
 
 ## Methods
 
@@ -203,6 +210,8 @@ assumptions - how to test assumptions
 -   Detail the models or algorithms used.
 
 -   Justify your choices based on the problem and data.
+
+
 
 *The common non-parametric regression model is*
 $Y_i = m(X_i) + \varepsilon_i$*, where* $Y_i$ *can be defined as the sum
