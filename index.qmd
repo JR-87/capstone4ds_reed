@@ -26,7 +26,6 @@ editor:
 
 ## Introduction
 
-*Background*
 As the COVID-19 pandemic demonstrated, the ability to predict the
 survival of a patient based on their symptoms and medical history is a
 major benefit as society deals with health crises such as pandemics.
@@ -95,23 +94,14 @@ company in the Czech Republic provides policies for certain illness
 events until the event occurs when the insured will receive money and
 their contract is complete. To assist the company with predicting if an
 individual will have one of the illness events occur, a model using CPH
-was generated using gender, age, and region as the
-covariates[@zapletal2021]. A study in 2023 focused on the length of
-productive life of female Floridian goats to determine the factors that
-would impact the longevity of the goats. CPH was used to determine that
-the age of first kidding and the specific herd impacts the length of
+was generated using gender, age, and region as the covariates
+[@zapletal2021]. A study in 2023 focused on the length of productive
+life of female Floridian goats to determine the factors that would
+impact the longevity of the goats. CPH was used to determine that the
+age of first kidding and the specific herd impacts the length of
 productive life of the goats [@ziadi2023]. Both of these studies provide
 examples of the reaches of CPH models outside the health industry.
 
-<<<<<<< HEAD
-Continuing with using CPH outside of health data, we will study the
-remaining useful life of a NASA aircraft engine using data provided by
-NASA for the study on propagation modeling [@saxena2008]. From the
-literature review, we have noted that we will need to be concerned with
-the constant hazards ratio within our data and determine how we will
-accommodate censored data when creating our model.
-
-=======
 CPH has the capability to be applied to many fields, though it poses
 some limitations. The constant hazards ratio and determining how to
 censor data are two concerns that can lead to limitations in using CPH
@@ -126,17 +116,71 @@ study as is done with medications and the development of cancer or other
 illnesses. However, while the usage of CPH is clear in the medical
 field, this paper will demonstrate using CPH within the field of
 mechanics and remaining useful life of a machine.
->>>>>>> 6495dacc416926e090ed60174ae8b3e2a4e87331
 
+## Methods
 
-*Data*
-From NASA's Open Data Portal CMAPSS Jet Engine Simulated Data we will be using the test_FD002 and train_FD002 datasets available for download at
-[NASA's Open Data Portal](https://data.nasa.gov/Aerospace/CMAPSS-Jet-Engine-Simulated-Data/ff5v-kuh6/about_data).
+*Notes:*
 
-Each engine has an unknown amount of wear, manufacturing variation, and sensor noise all of which impact the survival time. In the training dataset, each engine is operating normally at the beginning of the time series, develops a fault, and experiences failure at the end of the time series. The conditions the engines are subjected to are represented by three operational setting fields and 21 sensor measurement fields. In the testing data, the engines have not experienced failure.[@NASA_CMAPSS]
+*How coxph was created and creator what it was made for. it is semi
+parametric regression*
 
+*explain mathematically with equation*
 
-Headers of the train and test data are below.
+*How data needs to be formatted - time + event and covariates*
+
+*how it works*
+
+*assumptions - how to test assumptions*
+
+-   *Detail the models or algorithms used.*
+
+-   *Justify your choices based on the problem and data.*
+
+CPH can be estimated as
+
+$$
+h(t|\mathbf{Z}) = h_0(t)\text{exp}(\Sigma_{k=1}^{p} \beta_kZ_k)
+$$ {#eq-hazard}
+
+where,
+
+-   $h(t|\mathbf{Z})$ is the hazard rate at time $t$ for an individual
+    with risk vector $\mathbf{Z}$
+-   $h_0(t)$ is an arbitrary baseline hazard rate
+-   $\mathbf{Z}$ is the set of $p$ covariates
+-   $\beta$ is the set of $p$ coefficients that measure the impact of
+    the covariates
+
+## Analysis and Results
+
+### Data Exploration and Visualization
+
+Though CPH is typically used with health data, we wanted to determine
+how CPH can be used in other fields. As such, we will study the
+remaining useful life of a NASA aircraft engine using data provided by
+NASA for the study on propagation modeling [@saxena2008]. In particular,
+we will be examining their data from what they have deemed engine two.
+From the literature review, we have noted that we will need to be
+concerned with the constant hazards ratio within our data and determine
+how we will accommodate censored data when creating our model.
+
+Each engine has an unknown amount of wear, manufacturing variation, and
+sensor noise all of which impact the survival time. In the training
+dataset, each engine is operating normally at the beginning of the time
+series, develops a fault, and experiences failure at the end of the time
+series. The conditions the engines are subjected to are represented by
+three operational setting fields and 21 sensor measurement fields. In
+the testing data, the engines have not experienced failure
+[@NASA_CMAPSS].
+
+```{r, echo = FALSE}
+#packages
+library(tidyverse)
+library(gridExtra)
+library(survival)
+library(survminer)
+
+```
 
 ```{r}
 testurl <- 'https://raw.githubusercontent.com/JR-87/capstone4ds_reed/refs/heads/main/test_FD002.txt'
@@ -152,12 +196,11 @@ train <- read.table(trainurl, header = TRUE, sep = '')
 head(test)
 ```
 
-The visual below shows a histogram and a box plot representing distributions of survival times of the 260 unique engines in the training data.
-
+The visual below shows a histogram and a box plot representing
+distributions of survival times of the 260 unique engines in the
+training data.
 
 ```{r, echo=FALSE}
-library(tidyverse)
-
 distributions <- train %>% 
   group_by(id) %>%
   summarise(time = max(time))
@@ -177,7 +220,6 @@ box <- ggplot(data = distributions,
                color = "black")+
   theme_bw()
 
-library(gridExtra)
 
 grid.arrange(Histogram,box,ncol = 2, top = "Distribution of Engine Longevity in Training Data")
 
@@ -188,90 +230,22 @@ summary(distributions$time)
 
 sd(distributions$time)
 ```
-The engines have a median survival time of 199 iterations with a standard deviation of 46.8. The longest surviving engine lasted 378 iterations, with the shortest survival time for all engines being 128.
 
-
-## Methods
-
-
-How coxph was created and creator what it was made for. it is semi parametric regression
-
-explain mathematically with equation
-
-How data needs to be formatted - time + event and covariates
-
-how it works
-
-assumptions - how to test assumptions
-
-
-
-
--   Detail the models or algorithms used.
-
--   Justify your choices based on the problem and data.
-
-
-
-*The common non-parametric regression model is*
-$Y_i = m(X_i) + \varepsilon_i$*, where* $Y_i$ *can be defined as the sum
-of the regression function value* $m(x)$ *for* $X_i$*. Here* $m(x)$ *is
-unknown and* $\varepsilon_i$ *some errors. With the help of this
-definition, we can create the estimation for local averaging i.e.*
-$m(x)$ *can be estimated with the product of* $Y_i$ *average and* $X_i$
-*is near to* $x$*. In other words, this means that we are discovering
-the line through the data points with the help of surrounding data
-points. The estimation formula is printed below [@R-base]:*
-
-$$
-M_n(x) = \sum_{i=1}^{n} W_n (X_i) Y_i  \tag{1}
-$$$W_n(x)$ *is the sum of weights that belongs to all real numbers.
-Weights are positive numbers and small if* $X_i$ *is far from* $x$*.*
-
-*Another equation:*
-
-$$
-y_i = \beta_0 + \beta_1 X_1 +\varepsilon_i
-$$
-
-## Analysis and Results
-
-### Data Exploration and Visualization
-
-Though CPH is typically used with health data, we wanted to determine
-how CPH can be used in other fields. As such, we will study the
-remaining useful life of a NASA aircraft engine using data provided by
-NASA for the study on propagation modeling [@saxena2008]. In particular,
-we will be examining their data from what they have deemed engine two.
-From the literature review, we have noted that we will need to be
-concerned with the constant hazards ratio within our data and determine
-how we will accommodate censored data when creating our model.
-
-We will be using the test_FD002 and train_FD002 datasets available for
-download at [NASA's Open Data
-Portal](https://data.nasa.gov/Aerospace/CMAPSS-Jet-Engine-Simulated-Data/ff5v-kuh6/about_data)
-and also available on the home page of our [GitHub
-repository](https://github.com/JR-87/capstone4ds_reed).
+The engines have a median survival time of 199 iterations with a
+standard deviation of 46.8. The longest surviving engine lasted 378
+iterations, with the shortest survival time for all engines being 128.
 
 ```{r}
-testurl <- 'https://raw.githubusercontent.com/JR-87/capstone4ds_reed/refs/heads/main/test_FD002.txt'  
-test <- read.table(testurl, header = TRUE, sep = '')
-head(test)
-```
 
-```{r}
-trainurl <- 'https://raw.githubusercontent.com/JR-87/capstone4ds_reed/refs/heads/main/train_FD002.txt'  
-test <- read.table(trainurl, header = TRUE, sep = '') 
-head(test)
 ```
-
-## 
 
 -   Describe your data sources and collection process.
 
 -   Present initial findings and insights through visualizations.
 
 -   Highlight unexpected patterns or anomalies.
+
+### Modeling
 
 A study was conducted to determine how...Modeling and Results
 
@@ -283,11 +257,9 @@ A study was conducted to determine how...Modeling and Results
 
 -   **Tell a story about what the data reveals.**
 
-```{r}
+### Results
 
-```
-
-### Conclusion
+## Conclusion
 
 -   Summarize your key findings.
 
