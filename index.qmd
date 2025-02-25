@@ -179,6 +179,9 @@ library(tidyverse)
 library(gridExtra)
 library(survival)
 library(survminer)
+library(ggpubr)
+library(magrittr)
+library(ggfortify)
 
 ```
 
@@ -195,7 +198,7 @@ have 0s in all cycles except the last cycle of the machine.
 ```{r}
 testurl <- 'https://raw.githubusercontent.com/JR-87/capstone4ds_reed/refs/heads/main/test_FD002.txt'
 
-test <- read.table(testurl, header = TRUE, sep = '') %>%
+test <- read.delim(testurl, header = TRUE, sep = '') %>%
   mutate(status = 0)
 head(test, n = 5)
 ```
@@ -205,7 +208,7 @@ head(test, n = 5)
 ```{r}
 trainurl <- 'https://raw.githubusercontent.com/JR-87/capstone4ds_reed/refs/heads/main/train_FD002.txt'
 
-train <- read.table(trainurl, header = TRUE, sep = '') %>%
+train <- read.delim(trainurl, header = TRUE, sep = '') %>%
   group_by(id) %>%
   mutate(status = if_else(row_number() == n(), 1, 0)) %>%
   ungroup()
@@ -252,6 +255,17 @@ The engines have a median survival time of 199 iterations with a
 standard deviation of 46.8. The longest surviving engine lasted 378
 iterations, with the shortest survival time for all engines being 128.
 
+The Kaplan-Meier survival curve is shown below.
+
+```{r}
+t <- as.matrix(train[, "time"])
+s <- as.matrix(train[, "status"])
+
+km_fit <- survfit(Surv(t, s) ~ 1)
+
+autoplot(km_fit) + theme_bw()
+```
+
 From the study the data is from, we know that some of the sensors will
 not play a role in the RUL. As such, we will run a univariate test of
 all covariates to determine which ones will actually impact the RUL. We
@@ -267,13 +281,14 @@ univ_formulas <- sapply(covariates,
                         function(x) as.formula(paste('Surv(time, status)~', x)))
 
 univ_models <- lapply( univ_formulas, function(x){coxph(x, data = train)})
+
 # Extract data
 univ_results <- lapply(univ_models,
                        function(x){
                           x <- summary(x)
                           p.value<-signif(x$wald["pvalue"], digits=2)
                           wald.test<-signif(x$wald["test"], digits=2)
-                          beta<-signif(x$coef[1], digits=2);#coeficient beta
+                          beta<-signif(x$coef[1], digits=2);#coefficient beta
                           HR <-signif(x$coef[2], digits=2);#exp(beta)
                           HR.confint.lower <- signif(x$conf.int[,"lower .95"], 2)
                           HR.confint.upper <- signif(x$conf.int[,"upper .95"],2)
