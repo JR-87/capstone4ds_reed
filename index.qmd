@@ -171,7 +171,7 @@ series, develops a fault, and experiences failure at the end of the time
 series. The conditions the engines are subjected to are represented by
 three operational setting fields and 21 sensor measurement fields. In
 the testing data, the engines have not experienced failure
-[@NASA_CMAPSS].
+[@saxena2008].
 
 ```{r, echo = FALSE}
 #packages

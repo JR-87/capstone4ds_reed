@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Jayme Reed &amp; Brad Paton (Advisor: Dr. Cohen)">
-<meta name="dcterms.date" content="2025-02-24">
+<meta name="dcterms.date" content="2025-02-25">
 
 <title>Predicting Remaining Useful Life of NASA Aircraft Engines</title>
 <style>
@@ -3170,7 +3170,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">February 24, 2025</p>
+      <p class="date">February 25, 2025</p>
     </div>
   </div>
   
@@ -3221,7 +3221,7 @@ h(t|\mathbf{Z}) = h_0(t)\text{exp}(\Sigma_{k=1}^{p} \beta_kZ_k)
 <section id="data-exploration-and-visualization" class="level3">
 <h3 class="anchored" data-anchor-id="data-exploration-and-visualization">Data Exploration and Visualization</h3>
 <p>Though CPH is typically used with health data, we wanted to determine how CPH can be used in other fields. As such, we will study the remaining useful life (RUL) of a NASA aircraft engine using data provided by NASA for the study on propagation modeling <span class="citation" data-cites="saxena2008">(<a href="#ref-saxena2008" role="doc-biblioref">Saxena et al. 2008</a>)</span>. In particular, we will be examining their data from what they have deemed engine two. From the literature review, we have noted that we will need to be concerned with the constant hazards ratio within our data and determine how we will accommodate censored data when creating our model.</p>
-<p>Each engine has an unknown amount of wear, manufacturing variation, and sensor noise all of which impact the survival time. In the training dataset, each engine is operating normally at the beginning of the time series, develops a fault, and experiences failure at the end of the time series. The conditions the engines are subjected to are represented by three operational setting fields and 21 sensor measurement fields. In the testing data, the engines have not experienced failure <span class="citation" data-cites="NASA_CMAPSS">(<a href="#ref-NASA_CMAPSS" role="doc-biblioref">Simon; and Eklund 2008</a>)</span>.</p>
+<p>Each engine has an unknown amount of wear, manufacturing variation, and sensor noise all of which impact the survival time. In the training dataset, each engine is operating normally at the beginning of the time series, develops a fault, and experiences failure at the end of the time series. The conditions the engines are subjected to are represented by three operational setting fields and 21 sensor measurement fields. In the testing data, the engines have not experienced failure <span class="citation" data-cites="saxena2008">(<a href="#ref-saxena2008" role="doc-biblioref">Saxena et al. 2008</a>)</span>.</p>
 <p>For both test and train datasets, we will need to add a column indicating status. We will use 0 for still working and 1 for the last cycle when the engine fails. For the test data, we know that none of the engines have failed so all values in the test column will be 0 for still working. For the training data, we know that the data includes all cycles up to the last cycle when the machine will fail. As such, we will have 0s in all cycles except the last cycle of the machine.</p>
 <p><strong>Testing Data</strong></p>
 <div class="cell">
@@ -3421,9 +3421,6 @@ Lee, Seung Won. 2023. <span>“Kaplan-Meier and Cox Proportional Hazards Regress
 </div>
 <div id="ref-saxena2008" class="csl-entry" role="listitem">
 Saxena, Abhinav, Kai Goebel, Don Simon, and Neil Eklund. 2008. <span>“Damage Propagation Modeling for Aircraft Engine Run-to-Failure Simulation.”</span> In <em>2008 International Conference on Prognostics and Health Management</em>, 1–9. <a href="https://doi.org/10.1109/PHM.2008.4711414">https://doi.org/10.1109/PHM.2008.4711414</a>.
-</div>
-<div id="ref-NASA_CMAPSS" class="csl-entry" role="listitem">
-Simon;, A. Saxena; K. Goebel; D., and N. Eklund. 2008. <span>“CMAPSS Jet Engine Simulated Data.”</span> PCoE. <a href="https://data.nasa.gov/Aerospace/CMAPSS-Jet-Engine-Simulated-Data/ff5v-kuh6/about_data">https://data.nasa.gov/Aerospace/CMAPSS-Jet-Engine-Simulated-Data/ff5v-kuh6/about_data</a>.
 </div>
 <div id="ref-Smith2003" class="csl-entry" role="listitem">
 Tyler Smith, MPH;, MS; Besa Smith, and MPH Margaret AK Ryan MD. 2003. <span>“Survival Analysis Using Cox Proportional Hazards Modeling for Single and Multiple Event Time Data.”</span> <a href="https://www.ms.uky.edu/~mai/sta635/sugi254-28.pdf">https://www.ms.uky.edu/~mai/sta635/sugi254-28.pdf</a>.
