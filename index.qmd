@@ -157,12 +157,12 @@ where,
 
 Though CPH is typically used with health data, we wanted to determine
 how CPH can be used in other fields. As such, we will study the
-remaining useful life of a NASA aircraft engine using data provided by
-NASA for the study on propagation modeling [@saxena2008]. In particular,
-we will be examining their data from what they have deemed engine two.
-From the literature review, we have noted that we will need to be
-concerned with the constant hazards ratio within our data and determine
-how we will accommodate censored data when creating our model.
+remaining useful life (RUL) of a NASA aircraft engine using data
+provided by NASA for the study on propagation modeling [@saxena2008]. In
+particular, we will be examining their data from what they have deemed
+engine two. From the literature review, we have noted that we will need
+to be concerned with the constant hazards ratio within our data and
+determine how we will accommodate censored data when creating our model.
 
 Each engine has an unknown amount of wear, manufacturing variation, and
 sensor noise all of which impact the survival time. In the training
@@ -182,18 +182,31 @@ library(survminer)
 
 ```
 
+For both test and train datasets, we will need to add a column
+indicating status. We will use 0 for still working and 1 for the last
+cycle when the engine fails. For the test data, we know that none of the
+engines have failed so all values in the test column will be 0 for still
+working. For the training data, we know that the data includes all
+cycles up to the last cycle when the machine will fail. As such, we will
+have 0s in all cycles except the last cycle of the machine.
+
 ```{r}
 testurl <- 'https://raw.githubusercontent.com/JR-87/capstone4ds_reed/refs/heads/main/test_FD002.txt'
 
-test <- read.table(testurl, header = TRUE, sep = '')
-head(test)
+test <- read.table(testurl, header = TRUE, sep = '') %>%
+  mutate(status = 0)
+head(test, n = 5)
 ```
 
 ```{r}
 trainurl <- 'https://raw.githubusercontent.com/JR-87/capstone4ds_reed/refs/heads/main/train_FD002.txt'
 
-train <- read.table(trainurl, header = TRUE, sep = '')
-head(test)
+train <- read.table(trainurl, header = TRUE, sep = '') %>%
+  group_by(id) %>%
+  mutate(status = if_else(row_number() == n(), 1, 0)) %>%
+  ungroup()
+
+head(train, n = 5)
 ```
 
 The visual below shows a histogram and a box plot representing
@@ -235,8 +248,39 @@ The engines have a median survival time of 199 iterations with a
 standard deviation of 46.8. The longest surviving engine lasted 378
 iterations, with the shortest survival time for all engines being 128.
 
-```{r}
+From the study the data is from, we know that some of the sensors will
+not play a role in the RUL. As such, we will run a univariate test of
+all covariates to determine which ones will actually impact the RUL. We
+will use the p-value provided by the Wald test with a significance level
+of $\alpha = 0.05$.
 
+```{r}
+covariates <- c("os1", "os2", "os3", "sm1", "sm2", "sm3", "sm4", "sm5", "sm6", "sm7",
+                "sm8", "sm9", "sm10", "sm11", "sm12", "sm13", "sm14", "sm15", "sm16",
+                "sm17", "sm18", "sm19", "sm20", "sm21")
+
+univ_formulas <- sapply(covariates,
+                        function(x) as.formula(paste('Surv(time, status)~', x)))
+
+univ_models <- lapply( univ_formulas, function(x){coxph(x, data = train)})
+# Extract data
+univ_results <- lapply(univ_models,
+                       function(x){
+                          x <- summary(x)
+                          p.value<-signif(x$wald["pvalue"], digits=2)
+                          wald.test<-signif(x$wald["test"], digits=2)
+                          beta<-signif(x$coef[1], digits=2);#coeficient beta
+                          HR <-signif(x$coef[2], digits=2);#exp(beta)
+                          HR.confint.lower <- signif(x$conf.int[,"lower .95"], 2)
+                          HR.confint.upper <- signif(x$conf.int[,"upper .95"],2)
+                          HR <- paste0(HR, " (",
+                                       HR.confint.lower, "-", HR.confint.upper, ")")
+                          res<-c(beta, HR, wald.test, p.value)
+                          names(res)<-c("beta", "HR (95% CI for HR)", "wald.test",
+                                        "p.value")
+                          return(res)
+                         })
+as.data.frame(univ_results)
 ```
 
 -   Describe your data sources and collection process.

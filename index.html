@@ -3220,15 +3220,17 @@ h(t|\mathbf{Z}) = h_0(t)\text{exp}(\Sigma_{k=1}^{p} \beta_kZ_k)
 <h2 class="anchored" data-anchor-id="analysis-and-results">Analysis and Results</h2>
 <section id="data-exploration-and-visualization" class="level3">
 <h3 class="anchored" data-anchor-id="data-exploration-and-visualization">Data Exploration and Visualization</h3>
-<p>Though CPH is typically used with health data, we wanted to determine how CPH can be used in other fields. As such, we will study the remaining useful life of a NASA aircraft engine using data provided by NASA for the study on propagation modeling <span class="citation" data-cites="saxena2008">(<a href="#ref-saxena2008" role="doc-biblioref">Saxena et al. 2008</a>)</span>. In particular, we will be examining their data from what they have deemed engine two. From the literature review, we have noted that we will need to be concerned with the constant hazards ratio within our data and determine how we will accommodate censored data when creating our model.</p>
+<p>Though CPH is typically used with health data, we wanted to determine how CPH can be used in other fields. As such, we will study the remaining useful life (RUL) of a NASA aircraft engine using data provided by NASA for the study on propagation modeling <span class="citation" data-cites="saxena2008">(<a href="#ref-saxena2008" role="doc-biblioref">Saxena et al. 2008</a>)</span>. In particular, we will be examining their data from what they have deemed engine two. From the literature review, we have noted that we will need to be concerned with the constant hazards ratio within our data and determine how we will accommodate censored data when creating our model.</p>
 <p>Each engine has an unknown amount of wear, manufacturing variation, and sensor noise all of which impact the survival time. In the training dataset, each engine is operating normally at the beginning of the time series, develops a fault, and experiences failure at the end of the time series. The conditions the engines are subjected to are represented by three operational setting fields and 21 sensor measurement fields. In the testing data, the engines have not experienced failure <span class="citation" data-cites="NASA_CMAPSS">(<a href="#ref-NASA_CMAPSS" role="doc-biblioref">Simon; and Eklund 2008</a>)</span>.</p>
+<p>For both test and train datasets, we will need to add a column indicating status. We will use 0 for still working and 1 for the last cycle when the engine fails. For the test data, we know that none of the engines have failed so all values in the test column will be 0 for still working. For the training data, we know that the data includes all cycles up to the last cycle when the machine will fail. As such, we will have 0s in all cycles except the last cycle of the machine.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>testurl <span class="ot">&lt;-</span> <span class="st">&#39;https://raw.githubusercontent.com/JR-87/capstone4ds_reed/refs/heads/main/test_FD002.txt&#39;</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>test <span class="ot">&lt;-</span> <span class="fu">read.table</span>(testurl, <span class="at">header =</span> <span class="cn">TRUE</span>, <span class="at">sep =</span> <span class="st">&#39;&#39;</span>)</span>
-<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(test)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>test <span class="ot">&lt;-</span> <span class="fu">read.table</span>(testurl, <span class="at">header =</span> <span class="cn">TRUE</span>, <span class="at">sep =</span> <span class="st">&#39;&#39;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">status =</span> <span class="dv">0</span>)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(test, <span class="at">n =</span> <span class="dv">5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>  id time     os1    os2 os3    sm1    sm2     sm3     sm4   sm5   sm6    sm7
@@ -3237,21 +3239,18 @@ h(t|\mathbf{Z}) = h_0(t)\text{exp}(\Sigma_{k=1}^{p} \beta_kZ_k)
 3  1    3 35.0045 0.8400 100 449.44 556.00 1359.08 1128.36  5.48  8.00 193.55
 4  1    4 42.0066 0.8410 100 445.00 550.17 1349.69 1127.89  3.91  5.71 138.74
 5  1    5 24.9985 0.6213  60 462.54 536.72 1253.18 1050.69  7.05  9.03 175.75
-6  1    6 25.0006 0.6206  60 462.54 536.62 1258.90 1047.35  7.05  9.02 175.16
       sm8     sm9 sm10  sm11   sm12    sm13    sm14    sm15 sm16 sm17 sm18
 1 2318.96 8763.80 1.26 45.61 371.69 2388.18 8114.10  8.6476 0.03  369 2319
 2 2323.95 8713.21 1.08 44.26 315.32 2388.12 8053.06  9.2405 0.02  364 2324
 3 2222.67 8340.20 1.02 41.80 183.04 2387.75 8053.04  9.3472 0.02  333 2223
 4 2211.58 8313.85 1.02 42.21 130.40 2387.72 8066.90  9.3961 0.02  332 2212
 5 1915.10 7997.13 0.94 36.76 164.56 2028.05 7865.66 10.8682 0.02  305 1915
-6 1915.14 8007.49 0.94 36.87 164.46 2028.03 7859.98 10.9378 0.02  307 1915
-    sm19  sm20    sm21
-1 100.00 28.42 17.1551
-2 100.00 24.29 14.8039
-3 100.00 14.98  8.9125
-4 100.00 10.35  6.4181
-5  84.93 14.31  8.5740
-6  84.93 14.26  8.4941</code></pre>
+    sm19  sm20    sm21 status
+1 100.00 28.42 17.1551      0
+2 100.00 24.29 14.8039      0
+3 100.00 14.98  8.9125      0
+4 100.00 10.35  6.4181      0
+5  84.93 14.31  8.5740      0</code></pre>
 </div>
 </div>
 <div class="cell">
@@ -3259,31 +3258,25 @@ h(t|\mathbf{Z}) = h_0(t)\text{exp}(\Sigma_{k=1}^{p} \beta_kZ_k)
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>trainurl <span class="ot">&lt;-</span> <span class="st">&#39;https://raw.githubusercontent.com/JR-87/capstone4ds_reed/refs/heads/main/train_FD002.txt&#39;</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>train <span class="ot">&lt;-</span> <span class="fu">read.table</span>(trainurl, <span class="at">header =</span> <span class="cn">TRUE</span>, <span class="at">sep =</span> <span class="st">&#39;&#39;</span>)</span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(test)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>train <span class="ot">&lt;-</span> <span class="fu">read.table</span>(trainurl, <span class="at">header =</span> <span class="cn">TRUE</span>, <span class="at">sep =</span> <span class="st">&#39;&#39;</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(id) <span class="sc">%&gt;%</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">status =</span> <span class="fu">if_else</span>(<span class="fu">row_number</span>() <span class="sc">==</span> <span class="fu">n</span>(), <span class="dv">1</span>, <span class="dv">0</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(train, <span class="at">n =</span> <span class="dv">5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>  id time     os1    os2 os3    sm1    sm2     sm3     sm4   sm5   sm6    sm7
-1  1    1  9.9987 0.2502 100 489.05 605.03 1497.17 1304.99 10.52 15.49 394.54
-2  1    2 20.0026 0.7000 100 491.19 607.82 1481.20 1246.11  9.35 13.66 334.36
-3  1    3 35.0045 0.8400 100 449.44 556.00 1359.08 1128.36  5.48  8.00 193.55
-4  1    4 42.0066 0.8410 100 445.00 550.17 1349.69 1127.89  3.91  5.71 138.74
-5  1    5 24.9985 0.6213  60 462.54 536.72 1253.18 1050.69  7.05  9.03 175.75
-6  1    6 25.0006 0.6206  60 462.54 536.62 1258.90 1047.35  7.05  9.02 175.16
-      sm8     sm9 sm10  sm11   sm12    sm13    sm14    sm15 sm16 sm17 sm18
-1 2318.96 8763.80 1.26 45.61 371.69 2388.18 8114.10  8.6476 0.03  369 2319
-2 2323.95 8713.21 1.08 44.26 315.32 2388.12 8053.06  9.2405 0.02  364 2324
-3 2222.67 8340.20 1.02 41.80 183.04 2387.75 8053.04  9.3472 0.02  333 2223
-4 2211.58 8313.85 1.02 42.21 130.40 2387.72 8066.90  9.3961 0.02  332 2212
-5 1915.10 7997.13 0.94 36.76 164.56 2028.05 7865.66 10.8682 0.02  305 1915
-6 1915.14 8007.49 0.94 36.87 164.46 2028.03 7859.98 10.9378 0.02  307 1915
-    sm19  sm20    sm21
-1 100.00 28.42 17.1551
-2 100.00 24.29 14.8039
-3 100.00 14.98  8.9125
-4 100.00 10.35  6.4181
-5  84.93 14.31  8.5740
-6  84.93 14.26  8.4941</code></pre>
+<pre><code># A tibble: 5 × 27
+     id  time   os1   os2   os3   sm1   sm2   sm3   sm4   sm5   sm6   sm7   sm8
+  &lt;int&gt; &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;
+1     1     1  35.0 0.84    100  449.  555. 1359. 1137.  5.48  8     195. 2223.
+2     1     2  42.0 0.841   100  445   550. 1353. 1126.  3.91  5.71  139. 2212.
+3     1     3  25.0 0.622    60  463.  537. 1257. 1047.  7.05  9.02  176. 1915.
+4     1     4  42.0 0.842   100  445   550. 1354. 1126.  3.91  5.71  138. 2212.
+5     1     5  25.0 0.620    60  463.  537. 1258. 1048.  7.05  9.03  175. 1915.
+# ℹ 14 more variables: sm9 &lt;dbl&gt;, sm10 &lt;dbl&gt;, sm11 &lt;dbl&gt;, sm12 &lt;dbl&gt;,
+#   sm13 &lt;dbl&gt;, sm14 &lt;dbl&gt;, sm15 &lt;dbl&gt;, sm16 &lt;dbl&gt;, sm17 &lt;int&gt;, sm18 &lt;int&gt;,
+#   sm19 &lt;dbl&gt;, sm20 &lt;dbl&gt;, sm21 &lt;dbl&gt;, status &lt;dbl&gt;</code></pre>
 </div>
 </div>
 <p>The visual below shows a histogram and a box plot representing distributions of survival times of the 260 unique engines in the training data.</p>
@@ -3314,6 +3307,65 @@ h(t|\mathbf{Z}) = h_0(t)\text{exp}(\Sigma_{k=1}^{p} \beta_kZ_k)
 </div>
 </div>
 <p>The engines have a median survival time of 199 iterations with a standard deviation of 46.8. The longest surviving engine lasted 378 iterations, with the shortest survival time for all engines being 128.</p>
+<p>From the study the data is from, we know that some of the sensors will not play a role in the RUL. As such, we will run a univariate test of all covariates to determine which ones will actually impact the RUL. We will use the p-value provided by the Wald test with a significance level of <span class="math inline">\(\alpha = 0.05\)</span>.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>covariates <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;os1&quot;</span>, <span class="st">&quot;os2&quot;</span>, <span class="st">&quot;os3&quot;</span>, <span class="st">&quot;sm1&quot;</span>, <span class="st">&quot;sm2&quot;</span>, <span class="st">&quot;sm3&quot;</span>, <span class="st">&quot;sm4&quot;</span>, <span class="st">&quot;sm5&quot;</span>, <span class="st">&quot;sm6&quot;</span>, <span class="st">&quot;sm7&quot;</span>,</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>                <span class="st">&quot;sm8&quot;</span>, <span class="st">&quot;sm9&quot;</span>, <span class="st">&quot;sm10&quot;</span>, <span class="st">&quot;sm11&quot;</span>, <span class="st">&quot;sm12&quot;</span>, <span class="st">&quot;sm13&quot;</span>, <span class="st">&quot;sm14&quot;</span>, <span class="st">&quot;sm15&quot;</span>, <span class="st">&quot;sm16&quot;</span>,</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>                <span class="st">&quot;sm17&quot;</span>, <span class="st">&quot;sm18&quot;</span>, <span class="st">&quot;sm19&quot;</span>, <span class="st">&quot;sm20&quot;</span>, <span class="st">&quot;sm21&quot;</span>)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>univ_formulas <span class="ot">&lt;-</span> <span class="fu">sapply</span>(covariates,</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>                        <span class="cf">function</span>(x) <span class="fu">as.formula</span>(<span class="fu">paste</span>(<span class="st">&#39;Surv(time, status)~&#39;</span>, x)))</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>univ_models <span class="ot">&lt;-</span> <span class="fu">lapply</span>( univ_formulas, <span class="cf">function</span>(x){<span class="fu">coxph</span>(x, <span class="at">data =</span> train)})</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract data</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>univ_results <span class="ot">&lt;-</span> <span class="fu">lapply</span>(univ_models,</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>                       <span class="cf">function</span>(x){</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>                          x <span class="ot">&lt;-</span> <span class="fu">summary</span>(x)</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>                          p.value<span class="ot">&lt;-</span><span class="fu">signif</span>(x<span class="sc">$</span>wald[<span class="st">&quot;pvalue&quot;</span>], <span class="at">digits=</span><span class="dv">2</span>)</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>                          wald.test<span class="ot">&lt;-</span><span class="fu">signif</span>(x<span class="sc">$</span>wald[<span class="st">&quot;test&quot;</span>], <span class="at">digits=</span><span class="dv">2</span>)</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>                          beta<span class="ot">&lt;-</span><span class="fu">signif</span>(x<span class="sc">$</span>coef[<span class="dv">1</span>], <span class="at">digits=</span><span class="dv">2</span>);<span class="co">#coeficient beta</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>                          HR <span class="ot">&lt;-</span><span class="fu">signif</span>(x<span class="sc">$</span>coef[<span class="dv">2</span>], <span class="at">digits=</span><span class="dv">2</span>);<span class="co">#exp(beta)</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>                          HR.confint.lower <span class="ot">&lt;-</span> <span class="fu">signif</span>(x<span class="sc">$</span>conf.int[,<span class="st">&quot;lower .95&quot;</span>], <span class="dv">2</span>)</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>                          HR.confint.upper <span class="ot">&lt;-</span> <span class="fu">signif</span>(x<span class="sc">$</span>conf.int[,<span class="st">&quot;upper .95&quot;</span>],<span class="dv">2</span>)</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>                          HR <span class="ot">&lt;-</span> <span class="fu">paste0</span>(HR, <span class="st">&quot; (&quot;</span>,</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>                                       HR.confint.lower, <span class="st">&quot;-&quot;</span>, HR.confint.upper, <span class="st">&quot;)&quot;</span>)</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>                          res<span class="ot">&lt;-</span><span class="fu">c</span>(beta, HR, wald.test, p.value)</span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>                          <span class="fu">names</span>(res)<span class="ot">&lt;-</span><span class="fu">c</span>(<span class="st">&quot;beta&quot;</span>, <span class="st">&quot;HR (95% CI for HR)&quot;</span>, <span class="st">&quot;wald.test&quot;</span>,</span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>                                        <span class="st">&quot;p.value&quot;</span>)</span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>                          <span class="fu">return</span>(res)</span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>                         })</span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a><span class="fu">as.data.frame</span>(univ_results)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>                       os1            os2     os3           sm1        sm2
+beta                  0.02           0.31   0.023       -0.0099    -0.0034
+HR (95% CI for HR) 1 (1-1) 1.4 (0.91-2.1) 1 (1-1) 0.99 (0.99-1) 1 (0.99-1)
+wald.test               19            2.2      14            15        3.9
+p.value            1.1e-05           0.14   2e-04       0.00011      0.048
+                       sm3     sm4              sm5              sm6     sm7
+beta               6.2e-06 0.00028           -0.079           -0.047 -0.0014
+HR (95% CI for HR) 1 (1-1) 1 (1-1) 0.92 (0.89-0.96) 0.95 (0.93-0.98) 1 (1-1)
+wald.test                0     0.3               17               14     9.1
+p.value               0.99    0.58          3.5e-05          0.00022  0.0026
+                       sm8      sm9           sm10        sm11    sm12    sm13
+beta               0.00069 -9.8e-05            0.3       0.057 -0.0015  0.0026
+HR (95% CI for HR) 1 (1-1)  1 (1-1) 1.3 (0.52-3.5) 1.1 (1-1.1) 1 (1-1) 1 (1-1)
+wald.test              2.3     0.28           0.38         8.1       9      14
+p.value               0.13     0.59           0.54      0.0044  0.0027   2e-04
+                      sm14          sm15                    sm16     sm17
+beta                0.0035         -0.16                     -16 -4.2e-05
+HR (95% CI for HR) 1 (1-1) 0.85 (0.72-1) 1.2e-07 (1.2e-18-12000)  1 (1-1)
+wald.test               16           3.2                     1.5        0
+p.value              5e-05         0.073                    0.22     0.98
+                      sm18        sm19             sm20             sm21
+beta               0.00068       0.062           -0.024            -0.04
+HR (95% CI for HR) 1 (1-1) 1.1 (1-1.1) 0.98 (0.96-0.99) 0.96 (0.94-0.98)
+wald.test              2.3          14               12               12
+p.value               0.13       2e-04            6e-04          0.00059</code></pre>
+</div>
+</div>
 <ul>
 <li><p>Describe your data sources and collection process.</p></li>
 <li><p>Present initial findings and insights through visualizations.</p></li>
