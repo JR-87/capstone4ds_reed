@@ -190,6 +190,8 @@ working. For the training data, we know that the data includes all
 cycles up to the last cycle when the machine will fail. As such, we will
 have 0s in all cycles except the last cycle of the machine.
 
+**Testing Data**
+
 ```{r}
 testurl <- 'https://raw.githubusercontent.com/JR-87/capstone4ds_reed/refs/heads/main/test_FD002.txt'
 
@@ -197,6 +199,8 @@ test <- read.table(testurl, header = TRUE, sep = '') %>%
   mutate(status = 0)
 head(test, n = 5)
 ```
+
+**Training Data**
 
 ```{r}
 trainurl <- 'https://raw.githubusercontent.com/JR-87/capstone4ds_reed/refs/heads/main/train_FD002.txt'

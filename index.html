@@ -3223,6 +3223,7 @@ h(t|\mathbf{Z}) = h_0(t)\text{exp}(\Sigma_{k=1}^{p} \beta_kZ_k)
 <p>Though CPH is typically used with health data, we wanted to determine how CPH can be used in other fields. As such, we will study the remaining useful life (RUL) of a NASA aircraft engine using data provided by NASA for the study on propagation modeling <span class="citation" data-cites="saxena2008">(<a href="#ref-saxena2008" role="doc-biblioref">Saxena et al. 2008</a>)</span>. In particular, we will be examining their data from what they have deemed engine two. From the literature review, we have noted that we will need to be concerned with the constant hazards ratio within our data and determine how we will accommodate censored data when creating our model.</p>
 <p>Each engine has an unknown amount of wear, manufacturing variation, and sensor noise all of which impact the survival time. In the training dataset, each engine is operating normally at the beginning of the time series, develops a fault, and experiences failure at the end of the time series. The conditions the engines are subjected to are represented by three operational setting fields and 21 sensor measurement fields. In the testing data, the engines have not experienced failure <span class="citation" data-cites="NASA_CMAPSS">(<a href="#ref-NASA_CMAPSS" role="doc-biblioref">Simon; and Eklund 2008</a>)</span>.</p>
 <p>For both test and train datasets, we will need to add a column indicating status. We will use 0 for still working and 1 for the last cycle when the engine fails. For the test data, we know that none of the engines have failed so all values in the test column will be 0 for still working. For the training data, we know that the data includes all cycles up to the last cycle when the machine will fail. As such, we will have 0s in all cycles except the last cycle of the machine.</p>
+<p><strong>Testing Data</strong></p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -3253,6 +3254,7 @@ h(t|\mathbf{Z}) = h_0(t)\text{exp}(\Sigma_{k=1}^{p} \beta_kZ_k)
 5  84.93 14.31  8.5740      0</code></pre>
 </div>
 </div>
+<p><strong>Training Data</strong></p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
