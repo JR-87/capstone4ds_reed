@@ -182,6 +182,7 @@ library(survminer)
 library(ggpubr)
 library(magrittr)
 library(ggfortify)
+library(knitr)
 
 ```
 
@@ -200,7 +201,8 @@ testurl <- 'https://raw.githubusercontent.com/JR-87/capstone4ds_reed/refs/heads/
 
 test <- read.delim(testurl, header = TRUE, sep = '') %>%
   mutate(status = 0)
-head(test, n = 5)
+
+kable(head(test, n = 5), format = "markdown")
 ```
 
 **Training Data**
@@ -211,21 +213,36 @@ trainurl <- 'https://raw.githubusercontent.com/JR-87/capstone4ds_reed/refs/heads
 train <- read.delim(trainurl, header = TRUE, sep = '') %>%
   group_by(id) %>%
   mutate(status = if_else(row_number() == n(), 1, 0)) %>%
-  ungroup()
+  ungroup() 
 
-head(train, n = 5)
+kable(head(train, n = 5), format = "markdown")
 ```
 
 The visual below shows a histogram and a box plot representing
 distributions of survival times of the 260 unique engines in the
-training data.
+training data. The survival times have a normal distribution 
 
-```{r, echo=FALSE}
+The engines have a median survival time of 199 iterations with a
+standard deviation of 46.8. The longest surviving engine lasted 378
+iterations, with the shortest survival time for all engines being 128.
+
+```{r}
 distributions <- train %>% 
   group_by(id) %>%
   summarise(time = max(time))
-  
 
+summarymetrics <- summary(Minimum = min(time),
+                          Median = median(time),
+                          StandardDeviation = sd(time),
+                          Maximum = max(time), 
+                          distributions$time) 
+
+kable(tibble(summarymetrics), format = "markdown")
+
+```
+
+
+```{r, echo=FALSE}
 Histogram <- ggplot(data = distributions,
        aes(x = time)) +
   geom_histogram(binwidth = 5,
@@ -245,15 +262,6 @@ grid.arrange(Histogram,box,ncol = 2, top = "Distribution of Engine Longevity in 
 
 ```
 
-```{r}
-summary(distributions$time)
-
-sd(distributions$time)
-```
-
-The engines have a median survival time of 199 iterations with a
-standard deviation of 46.8. The longest surviving engine lasted 378
-iterations, with the shortest survival time for all engines being 128.
 
 The Kaplan-Meier survival curve is shown below.
 
@@ -299,8 +307,18 @@ univ_results <- lapply(univ_models,
                                         "p.value")
                           return(res)
                          })
-as.data.frame(univ_results)
+kable(as.data.frame(univ_results))
 ```
+
+Assumptions
+
+Proportional Hazards Assumption
+
+The proportional hazards assumption states the ratio of hazard rates for any two individuals is constant over time regardless of the point in time of the measurement. 
+
+The proportional hazards assumption has been proven to be critical for evaluating prior to using Cox Proportional Hazards to model survival data.
+
+
 
 -   Describe your data sources and collection process.
 
@@ -310,9 +328,23 @@ as.data.frame(univ_results)
 
 ### Modeling
 
+```{r}
+cox <- coxph(Surv(time, status) ~ os1 + os3 + sm1 + sm2 + sm5,
+             data = train)
+
+summary(cox)
+```
+```{r}
+cox.zph(cox)
+
+plot(cox.zph(cox))
+```
+
+
 A study was conducted to determine how...Modeling and Results
 
 -   Explain your data preprocessing and cleaning steps.
+transformation applied to data to add event
 
 -   Present your key findings in a clear and concise manner.
 
