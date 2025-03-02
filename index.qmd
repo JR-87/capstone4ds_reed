@@ -151,6 +151,8 @@ where,
 -   $\beta$ is the set of $p$ coefficients that measure the impact of
     the covariates
 
+
+
 ## Analysis and Results
 
 ### Data Exploration and Visualization
@@ -186,6 +188,8 @@ library(knitr)
 
 ```
 
+When using Cox proportional hazards models to model survival data, the data must include a value for time, a unique identifier column indicating which individual the time series is for, covariates used for predictions, and an event indicating the status of the individual at each point in time. The data used in this analysis contain all of the previously mentioned fields with the exception of a status field.
+
 For both test and train datasets, we will need to add a column
 indicating status. We will use 0 for still working and 1 for the last
 cycle when the engine fails. For the test data, we know that none of the
@@ -218,11 +222,7 @@ train <- read.delim(trainurl, header = TRUE, sep = '') %>%
 kable(head(train, n = 5), format = "markdown")
 ```
 
-The visual below shows a histogram and a box plot representing
-distributions of survival times of the 260 unique engines in the
-training data. The survival times have a normal distribution 
-
-The engines have a median survival time of 199 iterations with a
+The visuals below describe the distribution of the 260 engines in the training data. The histogram shows the survival times are normally distributed with a median value of 199 iterations and the boxplot shows there are few outliers out of the 260 engines. The engines have a median survival time of 199 iterations with a
 standard deviation of 46.8. The longest surviving engine lasted 378
 iterations, with the shortest survival time for all engines being 128.
 
@@ -310,23 +310,34 @@ univ_results <- lapply(univ_models,
 kable(as.data.frame(univ_results))
 ```
 
-Assumptions
+### Assumptions
 
-Proportional Hazards Assumption
+**Proportional Hazards Assumption**
 
-The proportional hazards assumption states the ratio of hazard rates for any two individuals is constant over time regardless of the point in time of the measurement. 
+The proportional hazards assumption has been proven to be critical to evaluate prior to using Cox Proportional Hazards when modeling survival data. The proportional hazards assumption states the ratio of hazard rates for any two individuals is constant over time regardless of the point in time of the measurement meaning the effect of the covariates must be constant over time. The assumption will be tested by calculating scaled Shoenfeld residuals and plotting them against time. The resulting plot for each covariate is interpreted to prove the assumption is met if the plot has Shoenfeld residuals roughly constant over time. [@Bustan2018]
 
-The proportional hazards assumption has been proven to be critical for evaluating prior to using Cox Proportional Hazards to model survival data.
+**Independent Censoring Assumption**
 
+This assumption describes how if an event is censored it is unrelated to the model being created. Censored data is difficult to accommodate when Cox proportional hazards models are used in other industries, such as the medical field, because observation times for the individuals involved in studies may have decades before an event is observed. In this scenario, it would not be appropriate to consider this individual when modeling survival. In the dataset being used for this model, the training data does not contain censored data. The documentation available at the dataset's source clarifies all engines in the training data have experienced the desired event of failure. 
 
+**Independence Assumption**
 
--   Describe your data sources and collection process.
+Survival times of observed individuals should be independent of each other. While not clarified in the data documentation, for this model it will be assumed that this assumption is true.
 
--   Present initial findings and insights through visualizations.
+### Model Evaluation
 
--   Highlight unexpected patterns or anomalies.
+To evaluate the model, the Cox regression concordance index will be used. Two observed pairs are said to be concordant if an event that is expected to occur before another does occur first. For example, if two engines are selected from the data and the model predicts one of them to be at a higher risk of failure than the other and the one with the higher risk fails first, then the pairs are concordant. If the alternative happens where the lower risk engine experiences failure first, then the pairs are discordant.
+
+The concordance index is calculated as follows:
+
+$C = \frac{ConcordantPairs}{ConcordantPairs + DiscordantPairs}$
+
+The concordance index will produce a value between 0 and 1 with 1 meaning all pairs are correctly ordered and 0 being the alternative with no pairs correctly ordered. The higher the concordance index for the created model, the more accurately it can model survival for the data.[@Therneau2017]
+
 
 ### Modeling
+
+Creating model
 
 ```{r}
 cox <- coxph(Surv(time, status) ~ os1 + os3 + sm1 + sm2 + sm5,
@@ -334,10 +345,14 @@ cox <- coxph(Surv(time, status) ~ os1 + os3 + sm1 + sm2 + sm5,
 
 summary(cox)
 ```
+
+
+**Checking Proportional Hazards**
 ```{r}
 cox.zph(cox)
 
 plot(cox.zph(cox))
+
 ```
 
 

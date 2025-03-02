@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Jayme Reed &amp; Brad Paton (Advisor: Dr. Cohen)">
-<meta name="dcterms.date" content="2025-02-26">
+<meta name="dcterms.date" content="2025-03-01">
 
 <title>Predicting Remaining Useful Life of NASA Aircraft Engines</title>
 <style>
@@ -3060,6 +3060,8 @@ vertical-align: -.125em;
   <li><a href="#analysis-and-results" id="toc-analysis-and-results" class="nav-link" data-scroll-target="#analysis-and-results">Analysis and Results</a>
   <ul class="collapse">
   <li><a href="#data-exploration-and-visualization" id="toc-data-exploration-and-visualization" class="nav-link" data-scroll-target="#data-exploration-and-visualization">Data Exploration and Visualization</a></li>
+  <li><a href="#assumptions" id="toc-assumptions" class="nav-link" data-scroll-target="#assumptions">Assumptions</a></li>
+  <li><a href="#model-evaluation" id="toc-model-evaluation" class="nav-link" data-scroll-target="#model-evaluation">Model Evaluation</a></li>
   <li><a href="#modeling" id="toc-modeling" class="nav-link" data-scroll-target="#modeling">Modeling</a></li>
   <li><a href="#results" id="toc-results" class="nav-link" data-scroll-target="#results">Results</a></li>
   </ul></li>
@@ -3090,7 +3092,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">February 26, 2025</p>
+      <p class="date">March 1, 2025</p>
     </div>
   </div>
   
@@ -3140,6 +3142,7 @@ h(t|\mathbf{Z}) = h_0(t)\text{exp}(\Sigma_{k=1}^{p} \beta_kZ_k)
 <h3 class="anchored" data-anchor-id="data-exploration-and-visualization">Data Exploration and Visualization</h3>
 <p>Though CPH is typically used with health data, we wanted to determine how CPH can be used in other fields. As such, we will study the remaining useful life (RUL) of a NASA aircraft engine using data provided by NASA for the study on propagation modeling <span class="citation" data-cites="saxena2008">(<a href="#ref-saxena2008" role="doc-biblioref">Saxena et al. 2008</a>)</span>. In particular, we will be examining their data from what they have deemed engine two. From the literature review, we have noted that we will need to be concerned with the constant hazards ratio within our data and determine how we will accommodate censored data when creating our model.</p>
 <p>Each engine has an unknown amount of wear, manufacturing variation, and sensor noise all of which impact the survival time. In the training dataset, each engine is operating normally at the beginning of the time series, develops a fault, and experiences failure at the end of the time series. The conditions the engines are subjected to are represented by three operational setting fields and 21 sensor measurement fields. In the testing data, the engines have not experienced failure <span class="citation" data-cites="saxena2008">(<a href="#ref-saxena2008" role="doc-biblioref">Saxena et al. 2008</a>)</span>.</p>
+<p>When using Cox proportional hazards models to model survival data, the data must include a value for time, a unique identifier column indicating which individual the time series is for, covariates used for predictions, and an event indicating the status of the individual at each point in time. The data used in this analysis contain all of the previously mentioned fields with the exception of a status field.</p>
 <p>For both test and train datasets, we will need to add a column indicating status. We will use 0 for still working and 1 for the last cycle when the engine fails. For the test data, we know that none of the engines have failed so all values in the test column will be 0 for still working. For the training data, we know that the data includes all cycles up to the last cycle when the machine will fail. As such, we will have 0s in all cycles except the last cycle of the machine.</p>
 <p><strong>Testing Data</strong></p>
 <div class="cell">
@@ -3589,8 +3592,7 @@ h(t|\mathbf{Z}) = h_0(t)\text{exp}(\Sigma_{k=1}^{p} \beta_kZ_k)
 </table>
 </div>
 </div>
-<p>The visual below shows a histogram and a box plot representing distributions of survival times of the 260 unique engines in the training data. The survival times have a normal distribution</p>
-<p>The engines have a median survival time of 199 iterations with a standard deviation of 46.8. The longest surviving engine lasted 378 iterations, with the shortest survival time for all engines being 128.</p>
+<p>The visuals below describe the distribution of the 260 engines in the training data. The histogram shows the survival times are normally distributed with a median value of 199 iterations and the boxplot shows there are few outliers out of the 260 engines. The engines have a median survival time of 199 iterations with a standard deviation of 46.8. The longest surviving engine lasted 378 iterations, with the shortest survival time for all engines being 128.</p>
 <div class="cell">
 <details>
 <summary>Code</summary>
@@ -3859,18 +3861,26 @@ h(t|\mathbf{Z}) = h_0(t)\text{exp}(\Sigma_{k=1}^{p} \beta_kZ_k)
 </table>
 </div>
 </div>
-<p>Assumptions</p>
-<p>Proportional Hazards Assumption</p>
-<p>The proportional hazards assumption states the ratio of hazard rates for any two individuals is constant over time regardless of the point in time of the measurement.</p>
-<p>The proportional hazards assumption has been proven to be critical for evaluating prior to using Cox Proportional Hazards to model survival data.</p>
-<ul>
-<li><p>Describe your data sources and collection process.</p></li>
-<li><p>Present initial findings and insights through visualizations.</p></li>
-<li><p>Highlight unexpected patterns or anomalies.</p></li>
-</ul>
+</section>
+<section id="assumptions" class="level3">
+<h3 class="anchored" data-anchor-id="assumptions">Assumptions</h3>
+<p><strong>Proportional Hazards Assumption</strong></p>
+<p>The proportional hazards assumption has been proven to be critical to evaluate prior to using Cox Proportional Hazards when modeling survival data. The proportional hazards assumption states the ratio of hazard rates for any two individuals is constant over time regardless of the point in time of the measurement meaning the effect of the covariates must be constant over time. The assumption will be tested by calculating scaled Shoenfeld residuals and plotting them against time. The resulting plot for each covariate is interpreted to prove the assumption is met if the plot has Shoenfeld residuals roughly constant over time. <span class="citation" data-cites="Bustan2018">(<a href="#ref-Bustan2018" role="doc-biblioref">Bustan 2018</a>)</span></p>
+<p><strong>Independent Censoring Assumption</strong></p>
+<p>This assumption describes how if an event is censored it is unrelated to the model being created. Censored data is difficult to accommodate when Cox proportional hazards models are used in other industries, such as the medical field, because observation times for the individuals involved in studies may have decades before an event is observed. In this scenario, it would not be appropriate to consider this individual when modeling survival. In the dataset being used for this model, the training data does not contain censored data. The documentation available at the dataset’s source clarifies all engines in the training data have experienced the desired event of failure.</p>
+<p><strong>Independence Assumption</strong></p>
+<p>Survival times of observed individuals should be independent of each other. While not clarified in the data documentation, for this model it will be assumed that this assumption is true.</p>
+</section>
+<section id="model-evaluation" class="level3">
+<h3 class="anchored" data-anchor-id="model-evaluation">Model Evaluation</h3>
+<p>To evaluate the model, the Cox regression concordance index will be used. Two observed pairs are said to be concordant if an event that is expected to occur before another does occur first. For example, if two engines are selected from the data and the model predicts one of them to be at a higher risk of failure than the other and the one with the higher risk fails first, then the pairs are concordant. If the alternative happens where the lower risk engine experiences failure first, then the pairs are discordant.</p>
+<p>The concordance index is calculated as follows:</p>
+<p><span class="math inline">\(C = \frac{ConcordantPairs}{ConcordantPairs + DiscordantPairs}\)</span></p>
+<p>The concordance index will produce a value between 0 and 1 with 1 meaning all pairs are correctly ordered and 0 being the alternative with no pairs correctly ordered. The higher the concordance index for the created model, the more accurately it can model survival for the data.<span class="citation" data-cites="Therneau2017">(<a href="#ref-Therneau2017" role="doc-biblioref">Therneau and Watson 2017</a>)</span></p>
 </section>
 <section id="modeling" class="level3">
 <h3 class="anchored" data-anchor-id="modeling">Modeling</h3>
+<p>Creating model</p>
 <div class="cell">
 <details>
 <summary>Code</summary>
@@ -3908,6 +3918,7 @@ Wald test            = 284.4  on 5 df,   p=&lt;2e-16
 Score (logrank) test = 294.8  on 5 df,   p=&lt;2e-16</code></pre>
 </div>
 </div>
+<p><strong>Checking Proportional Hazards</strong></p>
 <div class="cell">
 <details>
 <summary>Code</summary>
@@ -3973,6 +3984,9 @@ Abeysekera, W. W. M., and M. R. Sooriyarachchi. 2009. <span>“Use of Schoenfeld
 <div id="ref-asghar2024" class="csl-entry" role="listitem">
 Asghar, Naseem, Khalil Umair, and Iftikhar Uddin. 2024. <span>“Mixture and Non-Mixture Cure Models for the Survival Analysis of SARS-CoV-2 Patients in Khyber Pakhtunkhwa, Pakistan.”</span> <em>Pakistan Journal of Medical Sciences</em> 40 (8): 1841–46.
 </div>
+<div id="ref-Bustan2018" class="csl-entry" role="listitem">
+Bustan, M. Nadjib. 2018. <span>“Cox Proportional Hazard Survival Analysis to Inpatient Breast Cancer Cases.”</span>
+</div>
 <div id="ref-jiang2024" class="csl-entry" role="listitem">
 Jiang, Nan, Wu Yongfa, and Chengjia Li. 2024. <span>“Limitations of Using COX Proportional Hazards Model in Cardiovascular Research.”</span> <em>Cardiovascular Diabetology</em>, no. 1: 1–2.
 </div>
@@ -3987,6 +4001,9 @@ Lee, Seung Won. 2023. <span>“Kaplan-Meier and Cox Proportional Hazards Regress
 </div>
 <div id="ref-saxena2008" class="csl-entry" role="listitem">
 Saxena, Abhinav, Kai Goebel, Don Simon, and Neil Eklund. 2008. <span>“Damage Propagation Modeling for Aircraft Engine Run-to-Failure Simulation.”</span> In <em>2008 International Conference on Prognostics and Health Management</em>, 1–9. <a href="https://doi.org/10.1109/PHM.2008.4711414">https://doi.org/10.1109/PHM.2008.4711414</a>.
+</div>
+<div id="ref-Therneau2017" class="csl-entry" role="listitem">
+Therneau, Terry M., and David A. Watson. 2017. <span>“The Concordance Statistic and the Cox Model.”</span> <a href="https://www.mayo.edu/research/documents/bsi-techreport-85/doc-20433003">https://www.mayo.edu/research/documents/bsi-techreport-85/doc-20433003</a>.
 </div>
 <div id="ref-Smith2003" class="csl-entry" role="listitem">
 Tyler Smith, MPH;, MS; Besa Smith, and MPH Margaret AK Ryan MD. 2003. <span>“Survival Analysis Using Cox Proportional Hazards Modeling for Single and Multiple Event Time Data.”</span> <a href="https://www.ms.uky.edu/~mai/sta635/sugi254-28.pdf">https://www.ms.uky.edu/~mai/sta635/sugi254-28.pdf</a>.
