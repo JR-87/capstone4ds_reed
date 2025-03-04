@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Jayme Reed &amp; Brad Paton (Advisor: Dr. Cohen)">
-<meta name="dcterms.date" content="2025-03-02">
+<meta name="dcterms.date" content="2025-03-03">
 
 <title>Predicting Remaining Useful Life of NASA Aircraft Engines</title>
 <style>
@@ -3138,14 +3138,15 @@ window.Quarto = {
   <li><a href="#introduction" id="toc-introduction" class="nav-link active" data-scroll-target="#introduction">Introduction</a></li>
   <li><a href="#methods" id="toc-methods" class="nav-link" data-scroll-target="#methods">Methods</a>
   <ul class="collapse">
-  <li><a href="#assumptions" id="toc-assumptions" class="nav-link" data-scroll-target="#assumptions">Assumptions</a></li>
   <li><a href="#equations" id="toc-equations" class="nav-link" data-scroll-target="#equations">Equations</a></li>
+  <li><a href="#modeling" id="toc-modeling" class="nav-link" data-scroll-target="#modeling">Modeling</a></li>
+  <li><a href="#assumptions" id="toc-assumptions" class="nav-link" data-scroll-target="#assumptions">Assumptions</a></li>
   <li><a href="#model-evaluation" id="toc-model-evaluation" class="nav-link" data-scroll-target="#model-evaluation">Model Evaluation</a></li>
   </ul></li>
   <li><a href="#analysis-and-results" id="toc-analysis-and-results" class="nav-link" data-scroll-target="#analysis-and-results">Analysis and Results</a>
   <ul class="collapse">
   <li><a href="#data-exploration-and-visualization" id="toc-data-exploration-and-visualization" class="nav-link" data-scroll-target="#data-exploration-and-visualization">Data Exploration and Visualization</a></li>
-  <li><a href="#modeling" id="toc-modeling" class="nav-link" data-scroll-target="#modeling">Modeling</a></li>
+  <li><a href="#modeling-1" id="toc-modeling-1" class="nav-link" data-scroll-target="#modeling-1">Modeling</a></li>
   <li><a href="#results" id="toc-results" class="nav-link" data-scroll-target="#results">Results</a></li>
   </ul></li>
   <li><a href="#conclusion" id="toc-conclusion" class="nav-link" data-scroll-target="#conclusion">Conclusion</a></li>
@@ -3175,7 +3176,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">March 2, 2025</p>
+      <p class="date">March 3, 2025</p>
     </div>
   </div>
   
@@ -3199,25 +3200,12 @@ window.Quarto = {
 </section>
 <section id="methods" class="level2">
 <h2 class="anchored" data-anchor-id="methods">Methods</h2>
-<p>CPH relies on data that has a time to event component and covariates for that event.</p>
-<section id="assumptions" class="level3">
-<h3 class="anchored" data-anchor-id="assumptions">Assumptions</h3>
-<p><strong>Proportional Hazards Assumption</strong></p>
-<p>The proportional hazards assumption has been proven to be critical to evaluate prior to using CPH when modeling survival data. The proportional hazards assumption states that the ratio of hazard rates for any two individuals must be constant over time regardless of the point in time of the measurement <span class="citation" data-cites="Bustan2018">(<a href="#ref-Bustan2018" role="doc-biblioref">Bustan 2018</a>)</span> . This means the effect of the covariates must be constant over time. This assumption can be tested using the R package <code>survival</code>. The package contains a proportional hazards test called <code>cox.zph()</code> <span class="citation" data-cites="R-base">(<a href="#ref-R-base" role="doc-biblioref">R Core Team 2019</a>)</span>. Using the hypothesis,</p>
-<p><span class="math inline">\(H_0\)</span>: the predictor’s coefficient does not vary with time</p>
-<p><span class="math inline">\(H_1\)</span>: the predictor’s coefficient does vary with time</p>
-<p>the <code>cox.zph()</code> calculates the scaled Schoenfeld partial residuals and returns the <span class="math inline">\(\chi^2\)</span> value, the degrees of freedom, and p-values for each individual covariate along with a global value. Using an <span class="math inline">\(\alpha = 0.05\)</span> and the global p-value, the determination of whether to reject or fail to reject <span class="math inline">\(H_0\)</span> can be made <span class="citation" data-cites="nahhas2025">(<a href="#ref-nahhas2025" role="doc-biblioref">Nahhas 2025</a>)</span>. Individual plots for each covariate can then be generated which provide a visual interpretation of the p-values generated from <code>cox.zph()</code>.</p>
-<p><strong>Independent Censoring Assumption</strong></p>
-<p>This assumption describes how if an event is censored it is unrelated to the model being created. Censored data is difficult to accommodate when Cox proportional hazards models are used in other industries, such as the medical field, because observation times for the individuals involved in studies may have decades before an event is observed. In this scenario, it would not be appropriate to consider this individual when modeling survival.</p>
-<p><strong>Independence Assumption</strong></p>
-<p>Survival times of observed individuals should be independent of each other. While not clarified in the data documentation, for this model it will be assumed that this assumption is true.</p>
-</section>
+<p>To determine whether to use CPH for modeling, the data must contain a time to event value and meet various assumptions, including proportional hazards. Data that is censored will require a survival analysis that type of analysis is deliberately designed for censored data. The data must also have a binary indicator variable for the event occurrence and no missing values <span class="citation" data-cites="nahhas2025">(<a href="#ref-nahhas2025" role="doc-biblioref">Nahhas 2025</a>)</span>.</p>
 <section id="equations" class="level3">
 <h3 class="anchored" data-anchor-id="equations">Equations</h3>
+<p><strong>General Equation</strong></p>
 <p>CPH can be estimated as</p>
-<p><span id="eq-hazard"><span class="math display">\[
-h(t|\mathbf{Z}) = h_0(t)\text{exp}(\sum_{k=1}^{p} \beta_kZ_k)
-\tag{1}\]</span></span></p>
+<p><span class="math display">\[ h(t|\mathbf{Z}) = h_0(t)\text{exp}(\sum_{k=1}^{p} \beta_kZ_k) \]</span></p>
 <p>where,</p>
 <ul>
 <li><span class="math inline">\(h(t|\mathbf{Z})\)</span> is the hazard rate at time <span class="math inline">\(t\)</span> for an individual with risk vector <span class="math inline">\(\mathbf{Z}\)</span></li>
@@ -3225,17 +3213,44 @@ h(t|\mathbf{Z}) = h_0(t)\text{exp}(\sum_{k=1}^{p} \beta_kZ_k)
 <li><span class="math inline">\(\mathbf{Z}\)</span> is the set of <span class="math inline">\(p\)</span> covariates</li>
 <li><span class="math inline">\(\beta\)</span> is the set of <span class="math inline">\(p\)</span> coefficients that measure the impact of the covariates <span class="citation" data-cites="klein2005">(<a href="#ref-klein2005" role="doc-biblioref">Klein and Moeschberger 2005</a>)</span></li>
 </ul>
+<p>This equation can then be adapted for the specific dataset being studied.</p>
+<p><strong>Hazards Ratio</strong></p>
 <p>CPH is a proportional hazards model because the ratio of hazard rates between two individuals is</p>
-<p><span id="eq-hazardsratio"><span class="math display">\[
-\frac{h(t|\mathbf{Z})}{h(t|\mathbf{Z}^*)} = \frac{h_0(t)\text{exp}(\Sigma_{k=1}^{p} \beta_kZ_k)}{h_0(t)\text{exp}(\Sigma_{k=1}^{p} \beta_kZ_k^*)} = \text{exp}[\sum_{k=1}^p \beta_k(Z_k-Z_k^*)]
-\tag{2}\]</span></span></p>
+<p><span class="math display">\[ \frac{h(t|\mathbf{Z})}{h(t|\mathbf{Z}^*)} = \frac{h_0(t)\text{exp}(\Sigma_{k=1}^{p} \beta_kZ_k)}{h_0(t)\text{exp}(\Sigma_{k=1}^{p} \beta_kZ_k^*)} = \text{exp}[\sum_{k=1}^p \beta_k(Z_k-Z_k^*)] \]</span></p>
 <p>where,</p>
 <ul>
 <li><span class="math inline">\(\mathbf{Z}\)</span> and <span class="math inline">\(\mathbf{Z}^*\)</span> are covariate values <span class="citation" data-cites="klein2005">(<a href="#ref-klein2005" role="doc-biblioref">Klein and Moeschberger 2005</a>)</span></li>
 </ul>
 </section>
+<section id="modeling" class="level3">
+<h3 class="anchored" data-anchor-id="modeling">Modeling</h3>
+<p><strong>Kaplan-Meier</strong></p>
+<p>Before generating the CPH model, it is beneficial to look at the Kaplan-Meier curve. The Kaplan-Meier estimate …</p>
+<p><strong>CPH Model</strong></p>
+<p>To generate the CPH model, a survival object must first be created. Using the R package <code>survival</code>, the suvival formula can be generated by running <code>Surv(time, event) ~ x</code>. That formula is then applied to the R function <code>coxph(formula, data=)</code> which will generated the CPH model <span class="citation" data-cites="R-base">(<a href="#ref-R-base" role="doc-biblioref">R Core Team 2019</a>)</span>.</p>
+</section>
+<section id="assumptions" class="level3">
+<h3 class="anchored" data-anchor-id="assumptions">Assumptions</h3>
+<p>For the CPH model to be valid, the following assumptions must be met. If they are not met, the data must either be transformed.</p>
+<p><strong>Proportional Hazards Assumption</strong></p>
+<p>The proportional hazards assumption has been proven to be critical to evaluate prior to using CPH when modeling survival data. The proportional hazards assumption states that the ratio of hazard rates for any two individuals must be constant over time regardless of the point in time of the measurement <span class="citation" data-cites="Bustan2018">(<a href="#ref-Bustan2018" role="doc-biblioref">Bustan 2018</a>)</span> . This means the effect of the covariates must be constant over time. This assumption can be tested using the R package <code>survival</code>. The package contains a proportional hazards test called <code>cox.zph()</code> <span class="citation" data-cites="R-base">(<a href="#ref-R-base" role="doc-biblioref">R Core Team 2019</a>)</span>. Using the hypothesis,</p>
+<p><span class="math display">\[
+\begin{align*}
+H_0&amp;: \text{the predictor&#39;s coefficient does vary with time} \\
+H_1&amp;: \text{the predictor&#39;s coefficient does not vary with time}
+\end{align*}
+\]</span></p>
+<p>the <code>cox.zph()</code> calculates the scaled Schoenfeld partial residuals and returns the <span class="math inline">\(\chi^2\)</span> value, the degrees of freedom, and p-values for each individual covariate along with a global value. Using an <span class="math inline">\(\alpha = 0.05\)</span> and the global p-value, the determination of whether to reject or fail to reject <span class="math inline">\(H_0\)</span> can be made <span class="citation" data-cites="nahhas2025">(<a href="#ref-nahhas2025" role="doc-biblioref">Nahhas 2025</a>)</span>. Individual plots for each covariate can then be generated which provide a visual interpretation of the p-values generated from <code>cox.zph()</code>.</p>
+<p><strong>Independent Censoring Assumption</strong></p>
+<p>This assumption describes how if an event is censored it is unrelated to the model being created. Censored data is difficult to accommodate when Cox proportional hazards models are used in other industries, such as the medical field, because observation times for the individuals involved in studies may have decades before an event is observed. In this scenario, it would not be appropriate to consider this individual when modeling survival.</p>
+<p><strong>Independence Assumption</strong></p>
+<p>Survival times of observed individuals should be independent of each other. While not clarified in the data documentation, for this model it will be assumed that this assumption is true.</p>
+</section>
 <section id="model-evaluation" class="level3">
 <h3 class="anchored" data-anchor-id="model-evaluation">Model Evaluation</h3>
+<p><strong>Predictors</strong></p>
+<p>Hypothesis test and wording for the significance of the predictors.</p>
+<p><strong>Concordance Index</strong></p>
 <p>To evaluate the model, the Cox regression concordance index will be used. Two observed pairs are said to be concordant if an event that is expected to occur before another does occur first. For example, if two engines are selected from the data and the model predicts one of them to be at a higher risk of failure than the other and the one with the higher risk fails first, then the pairs are concordant. If the alternative happens where the lower risk engine experiences failure first, then the pairs are discordant.</p>
 <p>The concordance index is calculated as follows:</p>
 <p><span class="math inline">\(C = \frac{ConcordantPairs}{ConcordantPairs + DiscordantPairs}\)</span></p>
@@ -3986,8 +4001,8 @@ h(t|\mathbf{Z}) = h_0(t)\text{exp}(\sum_{k=1}^{p} \beta_kZ_k)
 </div>
 </div>
 </section>
-<section id="modeling" class="level3">
-<h3 class="anchored" data-anchor-id="modeling">Modeling</h3>
+<section id="modeling-1" class="level3">
+<h3 class="anchored" data-anchor-id="modeling-1">Modeling</h3>
 <p>Creating model</p>
 <div class="cell">
 <details class="code-fold">
