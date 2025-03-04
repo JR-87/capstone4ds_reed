@@ -204,21 +204,29 @@ reject or fail to reject $H_0$ can be made [@nahhas2025]. Individual
 plots for each covariate can then be generated which provide a visual
 interpretation of the p-values generated from `cox.zph()`.
 
+**Linearity Assumption**
+
+The linearity assumption states that the relationship between covariates and the log of the hazard rate must be linear. This assumption can be checked by plotting Martingale residuals against the range of values present in each covariate. 
+
+Martingale residuals are a type of residuals used in survival analysis that show the discrepancy between the observed and expected number of events. 
+$MartingaleResiduals = ObservedEvents - ExpectedEvents$
+
+If the resulting residuals are linear and appear to have a slope of zero, this assumption is not violated.[@Amini2015]
+
 **Independent Censoring Assumption**
 
-This assumption describes how if an event is censored it is unrelated to
-the model being created. Censored data is difficult to accommodate when
+This assumption describes how if an event is censored it should not be considered when
+the model is being created. Censored data is difficult to accommodate when
 Cox proportional hazards models are used in other industries, such as
 the medical field, because observation times for the individuals
-involved in studies may have decades before an event is observed. In
+involved in studies may have decades before an event is observed and the event may not have the opportunity to occur during the study period. In
 this scenario, it would not be appropriate to consider this individual
 when modeling survival.
 
 **Independence Assumption**
 
 Survival times of observed individuals should be independent of each
-other. While not clarified in the data documentation, for this model it
-will be assumed that this assumption is true.
+other. In an example where survival of plane engines were being evaluated, if each plane has two engines and the failure of one engine caused the accelerated failure of another due to increased workload, it would produce biased conclusions and violate the independence assumption.
 
 ### Model Evaluation
 
@@ -449,6 +457,18 @@ cox.zph(cox)
 plot(cox.zph(cox))
 
 ```
+
+**Checking Linearity Assumption**
+
+Example for one predictor
+```{r}
+martingale <- resid(cox, type = "martingale")
+
+plot(train$os1, martingale, main = "Martingale Residuals: os1")
+abline(h = 0, col = "red")
+
+```
+
 
 **Checking Independent Censoring**
 
