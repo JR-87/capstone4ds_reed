@@ -126,6 +126,8 @@ In order to use CPH to model time to event survival data, the data must contain 
 
 ### Creating Cox Proportional Hazards Model
 
+After verifying the survival data is formatted properly, the CPH model can be created in R. Important steps to consider are choosing covariates and verifying the model meet the model's assumptions after the model is created.
+
 #### Choosing covariates 
 
 From the study the data is from, we know that some of the sensors will
@@ -226,6 +228,24 @@ no pairs correctly ordered. The higher the concordance index for the
 created model, the more accurately it can model survival for the
 data.[@Therneau2017]
 
+
+
+### Model Visualization
+
+There are multiple different methods to visualize data when creating a  Cox proportional hazards model. Survival curves are a popular way to show survival probabilities over time, but there are other visualizations that are helpful when interpreting the results of the model.
+
+#### Forest Plot
+Forest plots can be used to visualize the effects of each covariate in the model on the hazard ratio. The resulting plot contains each covariate on the y axis, with the estimated effect on the hazard ratio on the the x axis. The plot contains whiskers demonstrating a 95% confidence interval for the effect. A positive effect indicates a positive correlation with the hazard with a higher number signifying a more severe effect on the hazard ratio.
+
+A forest plot will be created using the `plot_model()` function from the sjPlot package. The CPH model can be passed as the sole argument to visualize the hazard ratios.
+
+#### Kaplan-Meier Survival Curve
+
+After generating the CPH model, a Kaplan-Meier survival curve can be generated to view survival probabilities against time. These plots are important when modeling survival data because they clearly demonstrate the time where the event being modeled for is expected to occur.
+
+The survival curve will be plotted by using the survival package's `survfit()` function. The object created will be plotted using `plot()`
+
+
 ### Model Applications and Predictions
 
 Cox proportional hazards models can produce an assortment of useful metrics to interpret the model. The model created can be used to estimate risk of the event occurring, rate of occurrence, survival probability, and time to event.
@@ -276,6 +296,8 @@ Cumulative hazard represents the total accumulated risk of an individual for the
 
 $H(t) = \int_0^t h(t) dt$
 where,
+
+
 -   $H(t)$ is the cumulative hazard at time $t$
 
 -   $h(t)$ is the hazard rate at time t
@@ -290,6 +312,7 @@ $S(t) = exp(-H(t))$
 
 where, 
 
+
 -   $S(t)$ is the probability of survival for an individual at time $t$
 -   $H(t)$ is the cumulative hazard for an individual at time $t$
 
@@ -299,50 +322,19 @@ Survival probabilities can be calculated in R by using `stats::predict()` after 
 
 #### Predicting Time Until Event
 
+Time until event can be calculated by modeling survival probability for future time values. When survival probability drops below 50%, it will be assumed the event occurred. Predictions for time until event will be made on the testing data for each individual's maximum time value. A column will be added to the table showing the expected time until event.
+
+Tim until event can be modeled in R by passing the `type = "lp"` argument in the `stats::predict()` function to get a value for linear predictor. 
 
 
 
 
 
-### Model Visualization
-
-There are multiple different methods to visualize data when creating a  Cox proportional hazards model. Survival curves are a popular way to show survival probabilities over time, but there are other visualizations that are helpful when interpreting the results of the model.
-
-#### Forest Plot
-Forest plots can be used to visualize the effects of each covariate in the model on the hazard ratio. The resulting plot contains each covariate on the y axis, with the estimated effect on the hazard ratio on the the x axis. The plot contains whiskers demonstrating a 95% confidence interval for the effect. A positive effect indicates a positive correlation with the hazard with a higher number signifying a more severe effect on the hazard ratio.
-
-A forest plot will be created using the `plot_model()` function from the sjPlot package. The CPH model can be passed as the sole argument to visualize the hazard ratios.
-
-#### Kaplan-Meier Survival Curve
-
-After generating the CPH model, a Kaplan-Meier survival curve can be generated to view survival probabilities against time. These plots are important when modeling survival data because they clearly demonstrate the time where the event being modeled for is expected to occur.
-
-The survival curve will be plotted by using the survival package's `survfit()` function. The object created will be plotted using `plot()`
 
 ## Analysis and Results
 
-### Data Exploration and Visualization
-
-Though CPH is typically used with health data, we wanted to determine
-how CPH can be used in other fields. As such, we will study the
-remaining useful life (RUL) of a NASA aircraft engine using data
-provided by NASA for the study on propagation modeling [@saxena2008]. In
-particular, we will be examining their data from what they have deemed
-engine two. From the literature review, we have noted that we will need
-to be concerned with the constant hazards ratio within our data and
-determine how we will accommodate censored data when creating our model.
-
-Each engine has an unknown amount of wear, manufacturing variation, and
-sensor noise all of which impact the survival time. In the training
-dataset, each engine is operating normally at the beginning of the time
-series, develops a fault, and experiences failure at the end of the time
-series. The conditions the engines are subjected to are represented by
-three operational setting fields and 21 sensor measurement fields. In
-the testing data, the engines have not experienced failure
-[@saxena2008].
-
-```{r, echo = FALSE}
-#packages
+```{r, echo = FALSE, warning=FALSE,include=FALSE}
+#Load packages
 library(tidyverse)
 library(gridExtra)
 library(survival)
@@ -355,12 +347,28 @@ library(sjPlot)
 
 ```
 
-When using Cox proportional hazards models to model survival data, the
-data must include a value for time, a unique identifier column
-indicating which individual the time series is for, covariates used for
-predictions, and an event indicating the status of the individual at
-each point in time. The data used in this analysis contain all of the
-previously mentioned fields with the exception of a status field.
+
+### Data Structure, Exploration, and Visualization
+
+Though CPH is typically used with health data, we wanted to determine
+how CPH can be used in other fields. As such, we will study the
+remaining useful life (RUL) of a NASA aircraft engine using data
+provided by NASA for the study on propagation modeling [@saxena2008]. In
+particular, we will be examining their data from what they have deemed
+engine two. From the literature review, we have noted that we will need
+to be concerned with the constant hazards ratio within our data and
+determine how we will accommodate censored data when creating our model.
+
+#### Data Structure
+
+Each engine has an unknown amount of wear, manufacturing variation, and
+sensor noise all of which impact the survival time. In the training
+dataset, each engine is operating normally at the beginning of the time
+series, develops a fault, and experiences failure at the end of the time
+series. The conditions the engines are subjected to are represented by
+three operational setting fields and 21 sensor measurement fields. In
+the testing data, the engines have not experienced failure
+[@saxena2008].
 
 For both test and train datasets, we will need to add a column
 indicating status. We will use 0 for still working and 1 for the last
@@ -394,9 +402,11 @@ train <- read.delim(trainurl, header = TRUE, sep = '') %>%
 kable(head(train, n = 5), format = "markdown")
 ```
 
+#### Data Visualization
+
 The visuals below describe the distribution of the 260 engines in the
 training data. The histogram shows the survival times are normally
-distributed with a median value of 199 iterations and the boxplot shows
+distributed with a median value of 199 iterations and the box plot shows
 there are few outliers out of the 260 engines. The engines have a median
 survival time of 199 iterations with a standard deviation of 46.8. The
 longest surviving engine lasted 378 iterations, with the shortest
@@ -449,6 +459,10 @@ km_fit <- survfit(Surv(t, s) ~ 1)
 autoplot(km_fit) + theme_bw()
 ```
 
+### Creating Cox Proportional Hazards Model
+
+#### Choosing Covariates
+
 Below is a univariate test to determine which covariates to use in the model
 
 ```{r}
@@ -481,9 +495,8 @@ univ_results <- lapply(univ_models,
 kable(as.data.frame(univ_results))
 ```
 
-### Modeling
+#### Creating Model
 
-Creating model
 
 ```{r}
 cox <- coxph(Surv(time, status) ~ os1 + os3 + sm1 + sm2 + sm5,
@@ -493,7 +506,9 @@ cox <- coxph(Surv(time, status) ~ os1 + os3 + sm1 + sm2 + sm5,
 summary(cox)
 ```
 
-**Checking Proportional Hazards**
+#### Checking Assumptions
+
+**Checking Proportional Hazards Assumption**
 
 ```{r}
 cox.zph(cox)
@@ -513,6 +528,41 @@ abline(h = 0, col = "red")
 
 
 ```
+
+**Checking Independent Censoring**
+
+In the dataset being used for this model, the training data does not
+contain censored data. The documentation available at the dataset's
+source clarifies all engines in the training data have experienced the
+desired event of failure.
+
+### Model Evaluation
+
+### Model Visualization
+
+Forest Plot
+
+```{r}
+plot_model(cox,dot.size = 4,line.size = 2,colors = "red")+
+  theme_bw()+
+  labs(title = "Estimated Effects of Covariates on Hazard Ratios")+
+  ylab(label = "Covariates")+
+  xlab(label = "Estimated Effect on Hazard Ratio")
+```
+survival curve
+
+```{r}
+survfit <- survfit(cox, newdata = test)
+plot(survfit, 
+     col = "blue", 
+     conf.int = TRUE, 
+     mark.time = FALSE,
+     xlab = "Time (Iterations)",
+     ylab = "Survival Probability",
+     main = "Survival Probability Over Time")
+```
+
+### Model Applications and Predictions
 
 Create df with max time for each individual to use in predictions
 
@@ -559,39 +609,10 @@ test$survprob <- predict(cox, type = "survival", newdata = test)
 
 ```
 
-Forest Plot
-
-```{r}
-plot_model(cox,dot.size = 4,line.size = 2,colors = "red")+
-  theme_bw()+
-  labs(title = "Estimated Effects of Covariates on Hazard Ratios")+
-  ylab(label = "Covariates")+
-  xlab(label = "Estimated Effect on Hazard Ratio")
-```
-survival curve
-
-```{r}
-survfit <- survfit(cox, newdata = test)
-plot(survfit, 
-     col = "blue", 
-     conf.int = TRUE, 
-     mark.time = FALSE,
-     xlab = "Time (Iterations)",
-     ylab = "Survival Probability",
-     main = "Survival Probability Over Time")
-```
-
-
 Probability Calculation: $S(t) = e^{-H(t)}$
 $H(t)$ is the cumulative hazard up to time $t$
 
 
-**Checking Independent Censoring**
-
-In the dataset being used for this model, the training data does not
-contain censored data. The documentation available at the dataset's
-source clarifies all engines in the training data have experienced the
-desired event of failure.
 
 A study was conducted to determine how...Modeling and Results
 
