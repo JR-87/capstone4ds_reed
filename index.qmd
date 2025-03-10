@@ -24,6 +24,22 @@ editor:
 [Slides](slides.html){target="_blank"} \|
 [Literature](articleSummaries.html)
 
+
+```{r, echo = FALSE, warning=FALSE, include=FALSE}
+#Load packages
+library(tidyverse)
+library(gridExtra)
+library(survival)
+library(survminer)
+library(ggpubr)
+library(magrittr)
+library(ggfortify)
+library(knitr)
+library(sjPlot)
+
+```
+
+
 ## Introduction
 
 As the COVID-19 pandemic demonstrated, the ability to predict the
@@ -158,9 +174,12 @@ for any two individuals must be constant over time regardless of the
 point in time of the measurement. This means the effect
 of the covariates must be constant over time. [@Bustan2018]
 
+
 This assumption can be tested using the R package `survival`. The package contains a
 proportional hazards test called `cox.zph()` [@R-base]. Using the
 hypothesis,
+
+
 
 $$
 \begin{align*}
@@ -173,10 +192,26 @@ the `cox.zph()` calculates the scaled Schoenfeld partial residuals and
 returns the $\chi^2$ value, the degrees of freedom, and p-values for
 each individual covariate along with a global value. Using an
 $\alpha = 0.05$ and the global p-value, the determination of whether to
-reject or fail to reject $H_0$ can be made [@nahhas2025]. 
+reject or fail to reject $H_0$ can be made. In addition to the hypothesis test, these Shoenfeld residuals can be plotted against time for each covariate to visualize the assumption. When plotting the residuals against time, if the assumption is not broken it would be expected that the points show roughly a straight horizontal line to indicate constant hazard over time [@nahhas2025]. 
 
 Individual plots for each covariate are generated which provide a visual
 interpretation of the p-values generated from `cox.zph()`. If there is no clear slope in the residuals on the plot, it signifies further confirmation the proportional hazards assumption is met.
+
+Below is an example plot demonstrating Shoenfeld residuals plotted against time to test the proportional hazards assumption. While there is some curvature in the line, the residuals are roughly horizontal indicating proportional hazard over time for this covariate. In a model with multiple covariates, each one would need to be visualized to ensure it does not break this assumption and can be used in the model.
+
+
+```{r, echo=FALSE}
+example_surv_object <- Surv(time = lung$time, event = lung$status)
+
+example_coxmodel <- coxph(example_surv_object ~ meal.cal + age, data = lung)
+
+example_phtest <- cox.zph(example_coxmodel)
+
+plot(example_phtest[1],
+     ylab = "Covariate Schoenfeld Residual",
+     xlab = "Time")
+```
+
 
 #### Linearity Assumption
 
@@ -188,6 +223,19 @@ $MartingaleResiduals = ObservedEvents - ExpectedEvents$
 Residuals can first be found by using the `resid(type = "martingale")` function and passing martingale in the type argument creating a vector of residuals that can be plotted against the range of values for each covariate. 
 
 If the resulting residuals are linear and appear to have a slope of zero, this assumption is not violated.[@Amini2015]
+
+Below is an example plot showing Martingale residuals plotted against the range of values in the covariate being tested. From the plot, it is clear there is no clear slope in the residuals indicating the linearity assumption is not broken. For a model with multiple covariates, multiple plots will need to be made.
+
+```{r,echo=FALSE}
+example_martingale <- resid(example_coxmodel, type = "martingale")
+
+plot(example_martingale, 
+     main = "Martingale Residuals: Example Covariate",
+     ylab = "Martingale Residuals for Example Covariate",
+     xlab = "Value Range for Example Covariate")
+abline(h = 0, col = "red")
+```
+
 
 #### Independent Censoring Assumption
 
@@ -237,13 +285,40 @@ There are multiple different methods to visualize data when creating a  Cox prop
 #### Forest Plot
 Forest plots can be used to visualize the effects of each covariate in the model on the hazard ratio. The resulting plot contains each covariate on the y axis, with the estimated effect on the hazard ratio on the the x axis. The plot contains whiskers demonstrating a 95% confidence interval for the effect. A positive effect indicates a positive correlation with the hazard with a higher number signifying a more severe effect on the hazard ratio.
 
-A forest plot will be created using the `plot_model()` function from the sjPlot package. The CPH model can be passed as the sole argument to visualize the hazard ratios.
+A forest plot will be created using the `plot_model()` function from the sjPlot package. The CPH model can be passed as the sole argument to visualize the hazard ratios. An example forest plot is shown below plotting the hazard ratio for each covariate in the model. The point represents the calculated hazard ratio and the whiskers show the 95% confidence interval.
+
+```{r, echo=FALSE,warning=FALSE}
+plot_model(example_coxmodel,
+           dot.size = 1,
+           line.size = 1,
+           colors = "red")+
+  theme_bw()+
+  labs(title = "Estimated Effects of Covariates on Hazard Ratios")+
+  ylab(label = "Covariates")+
+  xlab(label = "Estimated Effect on Hazard Ratio")
+```
+
 
 #### Kaplan-Meier Survival Curve
 
 After generating the CPH model, a Kaplan-Meier survival curve can be generated to view survival probabilities against time. These plots are important when modeling survival data because they clearly demonstrate the time where the event being modeled for is expected to occur.
-
+'
 The survival curve will be plotted by using the survival package's `survfit()` function. The object created will be plotted using `plot()`
+
+Below is an example survival curve showing survival probabilities over time. The line represents the median survival probability with the red area around it showing the 95% confidence interval for the values. The curve can be interpreted as showing the probability of event would be expected to happen around a time of 300 where the survival probability is below 50%. 
+
+```{r, echo=FALSE}
+example_curve <- survfit(example_coxmodel)
+
+ggsurvplot(example_curve,
+           data = lung,
+           title = "Example Survival Curve",
+           xlab = "Time",
+           ylab = "Survival Probability",
+           legend = "none")
+
+```
+
 
 
 ### Model Applications and Predictions
@@ -302,9 +377,9 @@ where,
 
 -   $h(t)$ is the hazard rate at time t
 
-As defined by the formula, cumulative hazard is a summation of the hazard rates for an individual from time 0 to time $t$. A higher cumulative hazard indicates a higher risk of event. Cumulative hazard is used as an additional measure for risk, but it is mainly used to calculate survival probability to plot against time on survival curves. 
+As defined by the formula, cumulative hazard is a summation of the hazard rates for an individual from time 0 to time $t$. A higher cumulative hazard indicates a higher risk of event. Cumulative hazard is used as an additional measure for risk, but it is mainly used to calculate survival probability to plot against time on survival curves. [@klein2005]
 
-The cumulative hazard will be calculated in R by grouping the data by the id field and finding the summation of the hazard rates for the individual through the duration of the observation period. A column will be added showing the cumulative hazard for each individual at ach point in time.
+The cumulative hazard will be calculated in R by grouping the data by the id field and finding the summation of the hazard rates for the individual through the duration of the observation period. A column will be added showing the cumulative hazard for each individual at each point in time.
 
 #### Calculating Survival Probability
 
@@ -316,7 +391,7 @@ where,
 -   $S(t)$ is the probability of survival for an individual at time $t$
 -   $H(t)$ is the cumulative hazard for an individual at time $t$
 
-The resulting survival probability will be between 0 and 1 with a value close to one indicating a high probability of the individual not experiencing the event. Conversely, a value close to 0 indicates a higher probability of the individual experiencing the event. A survival probability of .05 indicates that only 5% of individuals under the same conditions would survive. Survival probability is an important metric when modeling, visualizing, and making predictions with survival data.
+The resulting survival probability will be between 0 and 1 with a value close to one indicating a high probability of the individual not experiencing the event. Conversely, a value close to 0 indicates a higher probability of the individual experiencing the event. A survival probability of .05 indicates that only 5% of individuals under the same conditions would survive. Survival probability is an important metric when modeling, visualizing, and making predictions with survival data.[@klein2005]
 
 Survival probabilities can be calculated in R by using `stats::predict()` after creating a CPH model. This function will be used to create a column showing the survival probability for each row in the testing data.
 
@@ -332,20 +407,6 @@ Tim until event can be modeled in R by passing the `type = "lp"` argument in the
 
 
 ## Analysis and Results
-
-```{r, echo = FALSE, warning=FALSE,include=FALSE}
-#Load packages
-library(tidyverse)
-library(gridExtra)
-library(survival)
-library(survminer)
-library(ggpubr)
-library(magrittr)
-library(ggfortify)
-library(knitr)
-library(sjPlot)
-
-```
 
 
 ### Data Structure, Exploration, and Visualization
@@ -552,14 +613,9 @@ plot_model(cox,dot.size = 4,line.size = 2,colors = "red")+
 survival curve
 
 ```{r}
-survfit <- survfit(cox, newdata = test)
-plot(survfit, 
-     col = "blue", 
-     conf.int = TRUE, 
-     mark.time = FALSE,
-     xlab = "Time (Iterations)",
-     ylab = "Survival Probability",
-     main = "Survival Probability Over Time")
+survfit <- survfit(cox)
+
+ggsurvplot(survfit, data = test)
 ```
 
 ### Model Applications and Predictions
