@@ -24,7 +24,6 @@ editor:
 [Slides](slides.html){target="_blank"} \|
 [Literature](articleSummaries.html)
 
-
 ```{r, echo = FALSE, warning=FALSE, include=FALSE}
 #Load packages
 library(tidyverse)
@@ -38,7 +37,6 @@ library(knitr)
 library(sjPlot)
 
 ```
-
 
 ## Introduction
 
@@ -135,16 +133,99 @@ mechanics and remaining useful life of a machine.
 
 ## Methods
 
+### Mathematical Formulas
+
+There are two functions that are the backbone for CPH: the survival
+function and the hazard function. The survival function when $X$ is a
+continuous random variable is
+
+$$
+S(x) = 1 - F(x) = 1 - Pr(X > x) = \int_x^\infty f(x) dx
+$$ {#eq-survival}
+
+where $S(x)$ is the probability that an individual has survived past
+time $x$ [@klein2005]. undefined
+
+The hazard function, which is also known as the hazard rate function,
+can be defined as
+
+$$
+ h(x) = \lim_{\Delta x \rightarrow 0} \frac{P[x\leq X < x + \Delta x | X \geq x]}{\Delta x}
+$$ {#eq-hazardrate}
+
+The function is used to describe the changes in [@klein2005].
+
+Since CPH is a proportional hazard model, the hazard function is adapted
+to deal with the relationship between time to event and the explanatory
+variables [@klein2005]. It can be defined as
+
+$$
+h(t|\mathbf{Z} ) = h_0(t)\text{exp}(\sum_{k=1}^p \beta_kZ_k)
+$$ {#eq-coxhazard}
+
+where,
+
+-   $h(t|\mathbf{Z})$ is the hazard rate at time $t$ for an subject with
+    risk vector $\mathbf{Z}$
+-   $h_0(t)$ is a baseline hazard rate when all covariates are $0$
+-   $\text{exp}(\sum_{k=1}^p \beta_k Z_k)$ is a semi-parametric model
+-   $\beta_k$ is a parameter vector
+-   $Z_k$ is the risk vector [@klein2005]
+
+CPH is considered a proportional hazards model due to the hazard ratio
+between two individuals being a constant value. The ratio of the hazard
+function for an individual with $\mathbf{Z}$ covariates where
+$Z_k = z+1$ and for an individual with $\mathbf{Z}^*$ covariates where
+$Z_k = z$ with all other predictors are fixed [@nahhas2025] is defined
+as
+
+$$
+\frac{h(t|\mathbf{Z})}{h(t|\mathbf{Z}^*)} = \frac{h_0(t)\text{exp}[\sum_{k=1}^p \beta_k Z_k]}{h_0(t)\text{exp}[\sum_{k=1}^p \beta_k Z^*_k]} = \text{exp}[\sum_{k=1}^p \beta_k(Z_k - Z_k^*)]
+$$ {#eq-hazardratio}[@klein2005]. The result of the hazard ratio (HR) is
+a constant that implies an association between a continuous predictor
+and the outcome. The interpretation of the HR is
+
+-   if HR $> 1$ implies a positive association such that
+    $100\% \times (HR - 1)$ is the \\% of greater risk for $Z = z+1$
+    when compared to $Z = z$.
+-   if HR $< 1$ implies a negatie association such that
+    $100\% \times (HR -1)$ is the \\% of decreased risk for $Z = z+1$
+    when compared to $Z= z$.
+-   if HR $=1$ implies no association. [@nahhas2025]
+
+An additional useful equations is the cumulative hazard function. The
+cumulative hazard function can be defined as
+
+$$
+ H(x) = \int_0^x h(u) du 
+$$ {#eq-cumulativehr}
+
+where $h(u)$ is the hazard rate function [@klein2005]. This function
+provides a better understanding of the survival function for graphing
+purposes.
+
 ### Data Structure
 
-In order to use CPH to model time to event survival data, the data must contain a value for time, a binary field indicating the event being modeled, an id field, and one or multiple covariate fields. The time value is typically formatted as a time series for each individual in the dataset. Individuals will have a time value from the beginning of the observation period, to an arbitrary time that may or may not be the time the event being modeled for occurs. Data is considered censored when the individual is not given the opportunity to experience the event in the observation period and is handled differently by the model. The covariate fields in the dataset can be categorical or numerical. [@nahhas2025].
-
+In order to use CPH to model time to event survival data, the data must
+contain a value for time, a binary field indicating the event being
+modeled, an id field, and one or multiple covariate fields. The time
+value is typically formatted as a time series for each subject in the
+dataset. Subjects will have a time value from the beginning of the
+observation period, to an arbitrary time that may or may not be the time
+the event being modeled for occurs. Data is considered censored when the
+subject is not given the opportunity to experience the event in the
+observation period and is handled differently by the model. The
+covariate fields in the dataset can be categorical or numerical
+[@nahhas2025].
 
 ### Creating Cox Proportional Hazards Model
 
-After verifying the survival data is formatted properly, the CPH model can be created in R. Important steps to consider are choosing covariates and verifying the model meet the model's assumptions after the model is created.
+After verifying the survival data is formatted properly, the CPH model
+can be created in R. Important steps to consider are choosing covariates
+and verifying the model meet the model's assumptions after the model is
+created.
 
-#### Choosing covariates 
+#### Choosing covariates
 
 From the study the data is from, we know that some of the sensors will
 not play a role in the RUL. As such, we will run a univariate test of
@@ -153,33 +234,40 @@ will use the p-value provided by the Wald test with a significance level
 of $\alpha = 0.05$.
 
 #### Generating Model
-To generate the CPH model with properly formatted survival data, a survival object must first be created using the R package `survival`. The survival object is created by running `Surv(time, event)` where `time` is the time field and `event` is the event field.
+
+To generate the CPH model with properly formatted survival data, a
+survival object must first be created using the R package `survival`.
+The survival object is created by running `Surv(time, event)` where
+`time` is the time field and `event` is the event field.
 
 To create the CPH model, the survival object is then applied to the R
-function `coxph(survival object ~ x, data)` where `x` represents one or multiple covariate(s) and `data` is the survival data that is being modeled.[@R-base].
+function `coxph(survival object ~ x, data)` where `x` represents one or
+multiple covariate(s) and `data` is the survival data that is being
+modeled.[@R-base].
 
-During the analysis, multiple models will be created with a different combination of covariates. 
+During the analysis, multiple models will be created with a different
+combination of covariates.
 
 ### Assumptions
 
-When creating a CPH model, to ensure an accurate model is created the following assumptions must be met. If
-they are not met, the data must either be transformed, stratified, or other covariates may need to be selected for the model. The assumptions associated with the CPH model are defined below.
+When creating a CPH model, to ensure an accurate model is created the
+following assumptions must be met. If they are not met, the data must
+either be transformed, stratified, or other covariates may need to be
+selected for the model. The assumptions associated with the CPH model
+are defined below.
 
 #### Proportional Hazards Assumption
 
 The proportional hazards assumption has been proven to be critical to
 evaluate prior to using CPH when modeling survival data. The
 proportional hazards assumption states that the ratio of hazard rates
-for any two individuals must be constant over time regardless of the
-point in time of the measurement. This means the effect
-of the covariates must be constant over time. [@Bustan2018]
+for any two subjects must be constant over time regardless of the point
+in time of the measurement. This means the effect of the covariates must
+be constant over time. [@Bustan2018]
 
-
-This assumption can be tested using the R package `survival`. The package contains a
-proportional hazards test called `cox.zph()` [@R-base]. Using the
-hypothesis,
-
-
+This assumption can be tested using the R package `survival`. The
+package contains a proportional hazards test called `cox.zph()`
+[@R-base]. Using the hypothesis,
 
 $$
 \begin{align*}
@@ -192,13 +280,24 @@ the `cox.zph()` calculates the scaled Schoenfeld partial residuals and
 returns the $\chi^2$ value, the degrees of freedom, and p-values for
 each individual covariate along with a global value. Using an
 $\alpha = 0.05$ and the global p-value, the determination of whether to
-reject or fail to reject $H_0$ can be made. In addition to the hypothesis test, these Shoenfeld residuals can be plotted against time for each covariate to visualize the assumption. When plotting the residuals against time, if the assumption is not broken it would be expected that the points show roughly a straight horizontal line to indicate constant hazard over time [@nahhas2025]. 
+reject or fail to reject $H_0$ can be made. In addition to the
+hypothesis test, these Shoenfeld residuals can be plotted against time
+for each covariate to visualize the assumption. When plotting the
+residuals against time, if the assumption is not broken it would be
+expected that the points show roughly a straight horizontal line to
+indicate constant hazard over time [@nahhas2025].
 
 Individual plots for each covariate are generated which provide a visual
-interpretation of the p-values generated from `cox.zph()`. If there is no clear slope in the residuals on the plot, it signifies further confirmation the proportional hazards assumption is met.
+interpretation of the p-values generated from `cox.zph()`. If there is
+no clear slope in the residuals on the plot, it signifies further
+confirmation the proportional hazards assumption is met.
 
-Below is an example plot demonstrating Shoenfeld residuals plotted against time to test the proportional hazards assumption. While there is some curvature in the line, the residuals are roughly horizontal indicating proportional hazard over time for this covariate. In a model with multiple covariates, each one would need to be visualized to ensure it does not break this assumption and can be used in the model.
-
+Below is an example plot demonstrating Shoenfeld residuals plotted
+against time to test the proportional hazards assumption. While there is
+some curvature in the line, the residuals are roughly horizontal
+indicating proportional hazard over time for this covariate. In a model
+with multiple covariates, each one would need to be visualized to ensure
+it does not break this assumption and can be used in the model.
 
 ```{r, echo=FALSE}
 example_surv_object <- Surv(time = lung$time, event = lung$status)
@@ -212,19 +311,30 @@ plot(example_phtest[1],
      xlab = "Time")
 ```
 
-
 #### Linearity Assumption
 
-The linearity assumption states that the relationship between covariates and the log of the hazard rate must be linear. This assumption can be checked by plotting Martingale residuals against the range of values present in each covariate. 
+The linearity assumption states that the relationship between covariates
+and the log of the hazard rate must be linear. This assumption can be
+checked by plotting Martingale residuals against the range of values
+present in each covariate.
 
-Martingale residuals are a type of residuals used in survival analysis that show the discrepancy between the observed and expected number of events. 
-$MartingaleResiduals = ObservedEvents - ExpectedEvents$
+Martingale residuals are a type of residuals used in survival analysis
+that show the discrepancy between the observed and expected number of
+events. $MartingaleResiduals = ObservedEvents - ExpectedEvents$
 
-Residuals can first be found by using the `resid(type = "martingale")` function and passing martingale in the type argument creating a vector of residuals that can be plotted against the range of values for each covariate. 
+Residuals can first be found by using the `resid(type = "martingale")`
+function and passing martingale in the type argument creating a vector
+of residuals that can be plotted against the range of values for each
+covariate.
 
-If the resulting residuals are linear and appear to have a slope of zero, this assumption is not violated.[@Amini2015]
+If the resulting residuals are linear and appear to have a slope of
+zero, this assumption is not violated.[@Amini2015]
 
-Below is an example plot showing Martingale residuals plotted against the range of values in the covariate being tested. From the plot, it is clear there is no clear slope in the residuals indicating the linearity assumption is not broken. For a model with multiple covariates, multiple plots will need to be made.
+Below is an example plot showing Martingale residuals plotted against
+the range of values in the covariate being tested. From the plot, it is
+clear there is no clear slope in the residuals indicating the linearity
+assumption is not broken. For a model with multiple covariates, multiple
+plots will need to be made.
 
 ```{r,echo=FALSE}
 example_martingale <- resid(example_coxmodel, type = "martingale")
@@ -236,29 +346,31 @@ plot(example_martingale,
 abline(h = 0, col = "red")
 ```
 
-
 #### Independent Censoring Assumption
 
-This assumption describes how if an event is censored it should not be considered when
-the model is being created. Censored data is difficult to accommodate when
-Cox proportional hazards models are used in other industries, such as
-the medical field, because observation times for the individuals
-involved in studies may have decades before an event is observed and the event may not have the opportunity to occur during the study period. In
-this scenario, it would not be appropriate to consider this individual
-when modeling survival.
+This assumption describes how if an event is censored it should not be
+considered when the model is being created. Censored data is difficult
+to accommodate when Cox proportional hazards models are used in other
+industries, such as the medical field, because observation times for the
+subjects involved in studies may have decades before an event is
+observed and the event may not have the opportunity to occur during the
+study period. In this scenario, it would not be appropriate to consider
+this subject when modeling survival.
 
 #### Independence Assumption
 
-Survival times of observed individuals should be independent of each
-other. In an example where survival of plane engines were being evaluated, if each plane has two engines and the failure of one engine caused the accelerated failure of another due to increased workload, it would produce biased conclusions and violate the independence assumption. 
-
+Survival times of observed subjects should be independent of each other.
+In an example where survival of plane engines were being evaluated, if
+each plane has two engines and the failure of one engine caused the
+accelerated failure of another due to increased workload, it would
+produce biased conclusions and violate the independence assumption.
 
 ### Model Evaluation
 
 **Concordance Index**
 
-To evaluate the model, the Cox regression concordance index can be
-used. Two observed pairs are said to be concordant if an event that is
+To evaluate the model, the Cox regression concordance index can be used.
+Two observed pairs are said to be concordant if an event that is
 expected to occur before another does occur first. For example, if two
 engines are selected from the data and the model predicts one of them to
 be at a higher risk of failure than the other and the one with the
@@ -276,16 +388,30 @@ no pairs correctly ordered. The higher the concordance index for the
 created model, the more accurately it can model survival for the
 data.[@Therneau2017]
 
-
-
 ### Model Visualization
 
-There are multiple different methods to visualize data when creating a  Cox proportional hazards model. Survival curves are a popular way to show survival probabilities over time, but there are other visualizations that are helpful when interpreting the results of the model.
+There are multiple different methods to visualize data when creating a
+Cox proportional hazards model. Survival curves are a popular way to
+show survival probabilities over time, but there are other
+visualizations that are helpful when interpreting the results of the
+model.
 
 #### Forest Plot
-Forest plots can be used to visualize the effects of each covariate in the model on the hazard ratio. The resulting plot contains each covariate on the y axis, with the estimated effect on the hazard ratio on the the x axis. The plot contains whiskers demonstrating a 95% confidence interval for the effect. A positive effect indicates a positive correlation with the hazard with a higher number signifying a more severe effect on the hazard ratio.
 
-A forest plot will be created using the `plot_model()` function from the sjPlot package. The CPH model can be passed as the sole argument to visualize the hazard ratios. An example forest plot is shown below plotting the hazard ratio for each covariate in the model. The point represents the calculated hazard ratio and the whiskers show the 95% confidence interval.
+Forest plots can be used to visualize the effects of each covariate in
+the model on the hazard ratio. The resulting plot contains each
+covariate on the y axis, with the estimated effect on the hazard ratio
+on the the x axis. The plot contains whiskers demonstrating a 95%
+confidence interval for the effect. A positive effect indicates a
+positive correlation with the hazard with a higher number signifying a
+more severe effect on the hazard ratio.
+
+A forest plot will be created using the `plot_model()` function from the
+sjPlot package. The CPH model can be passed as the sole argument to
+visualize the hazard ratios. An example forest plot is shown below
+plotting the hazard ratio for each covariate in the model. The point
+represents the calculated hazard ratio and the whiskers show the 95%
+confidence interval.
 
 ```{r, echo=FALSE,warning=FALSE}
 plot_model(example_coxmodel,
@@ -298,14 +424,21 @@ plot_model(example_coxmodel,
   xlab(label = "Estimated Effect on Hazard Ratio")
 ```
 
-
 #### Kaplan-Meier Survival Curve
 
-After generating the CPH model, a Kaplan-Meier survival curve can be generated to view survival probabilities against time. These plots are important when modeling survival data because they clearly demonstrate the time where the event being modeled for is expected to occur.
-'
-The survival curve will be plotted by using the survival package's `survfit()` function. The object created will be plotted using `plot()`
+After generating the CPH model, a Kaplan-Meier survival curve can be
+generated to view survival probabilities against time. These plots are
+important when modeling survival data because they clearly demonstrate
+the time where the event being modeled for is expected to occur. ' The
+survival curve will be plotted by using the survival package's
+`survfit()` function. The object created will be plotted using `plot()`
 
-Below is an example survival curve showing survival probabilities over time. The line represents the median survival probability with the red area around it showing the 95% confidence interval for the values. The curve can be interpreted as showing the probability of event would be expected to happen around a time of 300 where the survival probability is below 50%. 
+Below is an example survival curve showing survival probabilities over
+time. The line represents the median survival probability with the red
+area around it showing the 95% confidence interval for the values. The
+curve can be interpreted as showing the probability of event would be
+expected to happen around a time of 300 where the survival probability
+is below 50%.
 
 ```{r, echo=FALSE}
 example_curve <- survfit(example_coxmodel)
@@ -319,95 +452,31 @@ ggsurvplot(example_curve,
 
 ```
 
-
-
 ### Model Applications and Predictions
 
-Cox proportional hazards models can produce an assortment of useful metrics to interpret the model. The model created can be used to estimate risk of the event occurring, rate of occurrence, survival probability, and time to event.
+Cox proportional hazards models can produce an assortment of useful
+metrics to interpret the model. The model created can be used to
+estimate risk of the event occurring, rate of occurrence, survival
+probability, and time to event.
 
-#### Hazard Ratio
-
-CPH models focus on providing a relative risk of the event happening based on the covariates and value for time. The hazards ratio is used to evaluate this level of risk and is calculated by finding the ratio between two individuals where one is the baseline value of a covariate at time $t$, and the other is the value of a covariate with a one unit increase. The hazards ratio is represented by the formula below.
-
-$$ \frac{h(t|\mathbf{Z})}{h(t|\mathbf{Z}^*)} = \frac{h_0(t)\text{exp}(\Sigma_{k=1}^{p} \beta_kZ_k)}{h_0(t)\text{exp}(\Sigma_{k=1}^{p} \beta_kZ_k^*)} = \text{exp}[\sum_{k=1}^p \beta_k(Z_k-Z_k^*)] = \text{exp}(\sum_{k=1}^{p} \beta_kZ_k) $$
-
-where,
-
--   $\mathbf{Z}$ and $\mathbf{Z}^*$ are covariate values.
-
-A hazards ratio can be interpreted as:
-$h(t|\mathbf{Z})$ < 1 indicates a decreased baseline risk as compared to the baseline.
-$h(t|\mathbf{Z})$ > 1 indicates an increased baseline risk as compared to the baseline.
-
-Hazard ratios can be interpreted to give an estimation of the event occurring. For example, a hazard ratio of 1.3 signifies that for a one unit increase in the covariate, a 30% increase in risk of the event occurring is expected. Hazard ratios can also be used to calculate hazard rates, which have theiur own applications and interpretations when modeling survival data. [@klein2005]
-
-#### Hazard Rate
-
-The hazard rate is defined as:
-
-$$ h(t|\mathbf{Z}) = h_0(t)\text{exp}({\sum_{k=1}^{p} \beta_kZ_k}) $$
-
-where,
-
--   $h(t|\mathbf{Z})$ is the hazard rate at time $t$ for an individual
-    with risk vector $\mathbf{Z}$
-    
--   $\text{exp}(\sum_{k=1}^{p} \beta_kZ_k)$ is the hazard ratio as explained above.
-    
--   $h_0(t)$ is a baseline hazard rate indicating the hazard rate when all covariates are zero. 
-
-The resulting hazard rate is a measure of the instantaneous risk of the event happening at a specific point in time. Similar to the hazard ratio, hazard rates are interpreted as:
-
-$h(t|\mathbf{Z})$ < 1 indicates a lower risk of the event occurring at the specific point in time.
-$h(t|\mathbf{Z})$ > 1 indicates a higher risk of the event occurring at the specific point in time.
-
-Hazard rates can be used as an additional measure of risk, as well as to calculate the cumulative hazard for an individual. [@klein2005]
-
-The hazard rate can be calculated in R by using `stats::predict()` after creating a CPH model. This function will be used to create a column showing the hazard rate for each row in the testing data.
-
-#### Cumulative Hazard
-
-Cumulative hazard represents the total accumulated risk of an individual for the duration of the observation period at time $t$ and is defined as:
-
-$H(t) = \int_0^t h(t) dt$
-where,
-
-
--   $H(t)$ is the cumulative hazard at time $t$
-
--   $h(t)$ is the hazard rate at time t
-
-As defined by the formula, cumulative hazard is a summation of the hazard rates for an individual from time 0 to time $t$. A higher cumulative hazard indicates a higher risk of event. Cumulative hazard is used as an additional measure for risk, but it is mainly used to calculate survival probability to plot against time on survival curves. [@klein2005]
-
-The cumulative hazard will be calculated in R by grouping the data by the id field and finding the summation of the hazard rates for the individual through the duration of the observation period. A column will be added showing the cumulative hazard for each individual at each point in time.
-
-#### Calculating Survival Probability
-
-$S(t) = exp(-H(t))$
-
-where, 
-
-
--   $S(t)$ is the probability of survival for an individual at time $t$
--   $H(t)$ is the cumulative hazard for an individual at time $t$
-
-The resulting survival probability will be between 0 and 1 with a value close to one indicating a high probability of the individual not experiencing the event. Conversely, a value close to 0 indicates a higher probability of the individual experiencing the event. A survival probability of .05 indicates that only 5% of individuals under the same conditions would survive. Survival probability is an important metric when modeling, visualizing, and making predictions with survival data.[@klein2005]
-
-Survival probabilities can be calculated in R by using `stats::predict()` after creating a CPH model. This function will be used to create a column showing the survival probability for each row in the testing data.
+Survival probabilities can be calculated in R by using
+`stats::predict()` after creating a CPH model. This function will be
+used to create a column showing the survival probability for each row in
+the testing data.
 
 #### Predicting Time Until Event
 
-Time until event can be calculated by modeling survival probability for future time values. When survival probability drops below 50%, it will be assumed the event occurred. Predictions for time until event will be made on the testing data for each individual's maximum time value. A column will be added to the table showing the expected time until event.
+Time until event can be calculated by modeling survival probability for
+future time values. When survival probability drops below 50%, it will
+be assumed the event occurred. Predictions for time until event will be
+made on the testing data for each individual's maximum time value. A
+column will be added to the table showing the expected time until event.
 
-Tim until event can be modeled in R by passing the `type = "lp"` argument in the `stats::predict()` function to get a value for linear predictor. 
-
-
-
-
-
+Tim until event can be modeled in R by passing the `type = "lp"`
+argument in the `stats::predict()` function to get a value for linear
+predictor.
 
 ## Analysis and Results
-
 
 ### Data Structure, Exploration, and Visualization
 
@@ -524,7 +593,8 @@ autoplot(km_fit) + theme_bw()
 
 #### Choosing Covariates
 
-Below is a univariate test to determine which covariates to use in the model
+Below is a univariate test to determine which covariates to use in the
+model
 
 ```{r}
 covariates <- c("os1", "os2", "os3", "sm1", "sm2", "sm3", "sm4", "sm5", "sm6", "sm7",
@@ -558,7 +628,6 @@ kable(as.data.frame(univ_results))
 
 #### Creating Model
 
-
 ```{r}
 cox <- coxph(Surv(time, status) ~ os1 + os3 + sm1 + sm2 + sm5,
              data = train,
@@ -581,6 +650,7 @@ plot(cox.zph(cox))
 **Checking Linearity Assumption**
 
 Example for one predictor
+
 ```{r}
 martingale <- resid(cox, type = "martingale")
 
@@ -610,6 +680,7 @@ plot_model(cox,dot.size = 4,line.size = 2,colors = "red")+
   ylab(label = "Covariates")+
   xlab(label = "Estimated Effect on Hazard Ratio")
 ```
+
 survival curve
 
 ```{r}
@@ -633,11 +704,8 @@ coef <- data.frame(Variable = c("Z1", "Z2", "Z3", "Z4", "Z5"),
 kable(coef)
 ```
 
-
-
-Hazard Rate Calculation: $h(t|Z) = h_0(t) * e^{B_1Z_1 + B_2Z_2 + B_3Z_3+B_4Z_4+B_5Z_5}$
-
-
+Hazard Rate Calculation:
+$h(t|Z) = h_0(t) * e^{B_1Z_1 + B_2Z_2 + B_3Z_3+B_4Z_4+B_5Z_5}$
 
 ```{r}
 test$hazardrates <- predict(cox,
@@ -646,10 +714,8 @@ test$hazardrates <- predict(cox,
 
 ```
 
-$H(t) = \int_0^t h(t) dt$
-where,
-$H(t)$ is the cumulative hazard from time 0 to time $(t)$
-$h(t)$ is the hazard rate at time $t$
+$H(t) = \int_0^t h(t) dt$ where, $H(t)$ is the cumulative hazard from
+time 0 to time $(t)$ $h(t)$ is the hazard rate at time $t$
 
 ```{r}
 test <- test %>%
@@ -665,10 +731,8 @@ test$survprob <- predict(cox, type = "survival", newdata = test)
 
 ```
 
-Probability Calculation: $S(t) = e^{-H(t)}$
-$H(t)$ is the cumulative hazard up to time $t$
-
-
+Probability Calculation: $S(t) = e^{-H(t)}$ $H(t)$ is the cumulative
+hazard up to time $t$
 
 A study was conducted to determine how...Modeling and Results
 
