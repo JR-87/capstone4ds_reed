@@ -64,7 +64,7 @@ multiple covariates as a means of creating predictions until failure and
 are capable of dealing with survival data that contains censored data as
 well [@Seung2023]. Censored data is when the information about an
 individual in a study is only known for a certain period of time, such
-as the length of the study [@klein2005, 1]. The models also have the
+as the length of the study [@klein2005]. The models also have the
 advantage of being semi-parametric which allows more flexibility as
 compared to other models [@Ming-Chiang2014].
 
@@ -193,7 +193,7 @@ and the outcome. The interpretation of the HR is
     when compared to $Z= z$.
 -   if HR $=1$ implies no association. [@nahhas2025]
 
-An additional useful equations is the cumulative hazard function. The
+An additional useful equation is the cumulative hazard function. The
 cumulative hazard function can be defined as
 
 $$
@@ -208,66 +208,96 @@ purposes.
 
 In order to use CPH to model time to event survival data, the data must
 contain a value for time, a binary field indicating the event being
-modeled, an id field, and one or multiple covariate fields. The time
-value is typically formatted as a time series for each subject in the
-dataset. Subjects will have a time value from the beginning of the
-observation period, to an arbitrary time that may or may not be the time
-the event being modeled for occurs. Data is considered censored when the
-subject is not given the opportunity to experience the event in the
-observation period and is handled differently by the model. The
-covariate fields in the dataset can be categorical or numerical
-[@nahhas2025].
+modeled, an id field, and one or multiple covariate fields that can be
+categorical or numerical. The time value is typically formatted as a
+time series for each subject in the dataset. The first entry for
+subjects will be a time value from the beginning of the observation
+period with the final entry time varying by subject based on if the
+event occurred for that individual or if the study ended before the
+event occurred. Subjects who did not have the event occur by the end of
+the observation period are considered censored entries and will be
+handleded different in the model [@nahhas2025].
 
-### Creating Cox Proportional Hazards Model
+### Covariate Selection
 
-After verifying the survival data is formatted properly, the CPH model
-can be created in R. Important steps to consider are choosing covariates
-and verifying the model meet the model's assumptions after the model is
-created.
-
-#### Choosing covariates
-
-From the study the data is from, we know that some of the sensors will
-not play a role in the RUL. As such, we will run a univariate test of
-all covariates to determine which ones will actually impact the RUL. We
-will use the p-value provided by the Wald test with a significance level
-of $\alpha = 0.05$.
-
-#### Generating Model
-
-To generate the CPH model with properly formatted survival data, a
-survival object must first be created using the R package `survival`.
-The survival object is created by running `Surv(time, event)` where
-`time` is the time field and `event` is the event field.
-
-To create the CPH model, the survival object is then applied to the R
-function `coxph(survival object ~ x, data)` where `x` represents one or
-multiple covariate(s) and `data` is the survival data that is being
-modeled.[@R-base].
-
-During the analysis, multiple models will be created with a different
-combination of covariates.
+Depending on the study, there will be covariates that do not impact the
+probability of survival. Statistical methods such as the Wald Test can
+be used to determine which ones to use in the final CPH model.
+Generating a univariate CPH model for each covariate and using the Wald
+test with a significance level of $\alpha = 0.05$ will allow for
+determination of if a covariate is significant. Any covariates that are
+determined to be not significant to the survival probability can be
+removed from the final CPH model.
 
 ### Assumptions
 
-When creating a CPH model, to ensure an accurate model is created the
-following assumptions must be met. If they are not met, the data must
-either be transformed, stratified, or other covariates may need to be
-selected for the model. The assumptions associated with the CPH model
-are defined below.
+```{r, echo = FALSE}
+#generation of the model for sample plots
+example_surv_object <- Surv(time = lung$time, event = lung$status)
 
-#### Proportional Hazards Assumption
+example_coxmodel <- coxph(example_surv_object ~ meal.cal + age, data = lung)
+```
 
-The proportional hazards assumption has been proven to be critical to
-evaluate prior to using CPH when modeling survival data. The
-proportional hazards assumption states that the ratio of hazard rates
-for any two subjects must be constant over time regardless of the point
-in time of the measurement. This means the effect of the covariates must
-be constant over time. [@Bustan2018]
+There are four assumptions that a CPH model must meet in order to be an
+accurate model. For any violation of those assumptions, the data will
+need to be either transformed, stratified, or other covariates may need
+to be selected for the model. The four assumptions are the independence
+assumption, non-informative censoring, linearity assumption, and
+proportional hazards assumption.
 
-This assumption can be tested using the R package `survival`. The
-package contains a proportional hazards test called `cox.zph()`
-[@R-base]. Using the hypothesis,
+**Independence Assumption**
+
+CPH assumes that the survival times of observed subjects are independent
+of each other. This is similar to most regression models, though CPH
+does not assume that the residuals of the model be normally distributed
+or have constant variance [@nahhas2025].
+
+**Non-informative Censoring Assumption**
+
+CPH assumes that censoring is non-informative which means that each
+subject has the same risk of experiencing the event regardless of one of
+them being censored. Thus, the knowledge of censoring does not result in
+any new information being provided [@nahhas2025].
+
+**Linearity Assumption**
+
+CPH assumes the relationship between covariates and the outcome is a
+linear relationship [@nahhas2025]. For CPH, the outcome for that
+relationship is the log of the hazard rate. This assumption is checked
+visually using the Martingale residuals for each covariate
+[@nahhas2025]. Martingale residuals are a type of residauls used in
+survival analysis that show the discrepancy between the observed and the
+expected number of events. The equation is
+$\text{Martingale Residuals} = \text{Observed Events} - \text{Expected Events}$.
+The resulting residuals are examined visually and if they are linear and
+appear to have a slope of zero, the linearity assumption is not violated
+[@Amini2015].
+
+Below is an example plot showing Martingale residuals plotted for a
+covariate being tested. From the plot, it is visually clear that the
+residuals are linear and appear to have a slope of zero. For this
+covariate then, the linearity assumption has not been violated. If a
+model is being generated with multiple covariates, multiple Martingale
+residual plots will need to be generated in order to verify this
+assumption for each covariate.
+
+```{r,echo=FALSE}
+example_martingale <- resid(example_coxmodel, type = "martingale")
+
+plot(example_martingale, 
+     main = "Martingale Residuals: Example Covariate",
+     ylab = "Martingale Residuals for Example Covariate",
+     xlab = "Value Range for Example Covariate")
+abline(h = 0, col = "red")
+```
+
+**Proportional Hazards Assumption**
+
+The major assumption for CPH is the proportional hazards assumption
+which states that the ratio of hazard rates for any two subjects must be
+constant at all times. This means the effect of the covariates must be
+constant over time [@Bustan2018]. To test this assumption, the
+hypothesis test below is used along with Schoenfeld partial residuals.
 
 $$
 \begin{align*}
@@ -299,71 +329,12 @@ indicating proportional hazard over time for this covariate. In a model
 with multiple covariates, each one would need to be visualized to ensure
 it does not break this assumption and can be used in the model.
 
-```{r, echo=FALSE}
-example_surv_object <- Surv(time = lung$time, event = lung$status)
-
-example_coxmodel <- coxph(example_surv_object ~ meal.cal + age, data = lung)
-
-example_phtest <- cox.zph(example_coxmodel)
+```{example_phtest <- cox.zph(example_coxmodel)}
 
 plot(example_phtest[1],
      ylab = "Covariate Schoenfeld Residual",
      xlab = "Time")
 ```
-
-#### Linearity Assumption
-
-The linearity assumption states that the relationship between covariates
-and the log of the hazard rate must be linear. This assumption can be
-checked by plotting Martingale residuals against the range of values
-present in each covariate.
-
-Martingale residuals are a type of residuals used in survival analysis
-that show the discrepancy between the observed and expected number of
-events. $MartingaleResiduals = ObservedEvents - ExpectedEvents$
-
-Residuals can first be found by using the `resid(type = "martingale")`
-function and passing martingale in the type argument creating a vector
-of residuals that can be plotted against the range of values for each
-covariate.
-
-If the resulting residuals are linear and appear to have a slope of
-zero, this assumption is not violated.[@Amini2015]
-
-Below is an example plot showing Martingale residuals plotted against
-the range of values in the covariate being tested. From the plot, it is
-clear there is no clear slope in the residuals indicating the linearity
-assumption is not broken. For a model with multiple covariates, multiple
-plots will need to be made.
-
-```{r,echo=FALSE}
-example_martingale <- resid(example_coxmodel, type = "martingale")
-
-plot(example_martingale, 
-     main = "Martingale Residuals: Example Covariate",
-     ylab = "Martingale Residuals for Example Covariate",
-     xlab = "Value Range for Example Covariate")
-abline(h = 0, col = "red")
-```
-
-#### Independent Censoring Assumption
-
-This assumption describes how if an event is censored it should not be
-considered when the model is being created. Censored data is difficult
-to accommodate when Cox proportional hazards models are used in other
-industries, such as the medical field, because observation times for the
-subjects involved in studies may have decades before an event is
-observed and the event may not have the opportunity to occur during the
-study period. In this scenario, it would not be appropriate to consider
-this subject when modeling survival.
-
-#### Independence Assumption
-
-Survival times of observed subjects should be independent of each other.
-In an example where survival of plane engines were being evaluated, if
-each plane has two engines and the failure of one engine caused the
-accelerated failure of another due to increased workload, it would
-produce biased conclusions and violate the independence assumption.
 
 ### Model Evaluation
 
@@ -627,6 +598,19 @@ kable(as.data.frame(univ_results))
 ```
 
 #### Creating Model
+
+To generate the CPH model with properly formatted survival data, a
+survival object must first be created using the R package `survival`.
+The survival object is created by running `Surv(time, event)` where
+`time` is the time field and `event` is the event field.
+
+To create the CPH model, the survival object is then applied to the R
+function `coxph(survival object ~ x, data)` where `x` represents one or
+multiple covariate(s) and `data` is the survival data that is being
+modeled.[@R-base].
+
+During the analysis, multiple models will be created with a different
+combination of covariates.
 
 ```{r}
 cox <- coxph(Surv(time, status) ~ os1 + os3 + sm1 + sm2 + sm5,
