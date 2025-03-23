@@ -28,6 +28,7 @@ editor:
 #Load packages
 library(tidyverse)
 library(gridExtra)
+library(grid)
 library(survival)
 library(survminer)
 library(ggpubr)
@@ -202,7 +203,7 @@ $$ {#eq-cumulativehr}
 
 where $h(u)$ is the hazard rate function [@klein2005]. This function
 provides a better understanding of the survival function for graphing
-purposes.
+purposes.[@Amini2015]
 
 ### Data Structure
 
@@ -235,18 +236,10 @@ of $\alpha = 0.05$.
 
 #### Generating Model
 
-To generate the CPH model with properly formatted survival data, a
-survival object must first be created using the R package `survival`.
-The survival object is created by running `Surv(time, event)` where
-`time` is the time field and `event` is the event field.
-
-To create the CPH model, the survival object is then applied to the R
-function `coxph(survival object ~ x, data)` where `x` represents one or
-multiple covariate(s) and `data` is the survival data that is being
-modeled.[@R-base].
-
 During the analysis, multiple models will be created with a different
-combination of covariates.
+combination of covariates. Covariates will be considered in the models that pass the covariate test. After creating the models, the assumptions described below will be tested. Out of the multiple models created, models will also not be considered where the assumptions are not true.
+
+The model used through the rest of the analysis to make predictions will be the model with the best evaluation where the assumptions ar true.
 
 ### Assumptions
 
@@ -265,9 +258,7 @@ for any two subjects must be constant over time regardless of the point
 in time of the measurement. This means the effect of the covariates must
 be constant over time. [@Bustan2018]
 
-This assumption can be tested using the R package `survival`. The
-package contains a proportional hazards test called `cox.zph()`
-[@R-base]. Using the hypothesis,
+This assumption can be tested with a hypothesis test using the hypothesis:
 
 $$
 \begin{align*}
@@ -276,7 +267,7 @@ H_1&: \text{the predictor's coefficient does not vary with time}
 \end{align*}
 $$
 
-the `cox.zph()` calculates the scaled Schoenfeld partial residuals and
+The `cox.zph()` function calculates the scaled Schoenfeld partial residuals and
 returns the $\chi^2$ value, the degrees of freedom, and p-values for
 each individual covariate along with a global value. Using an
 $\alpha = 0.05$ and the global p-value, the determination of whether to
@@ -322,11 +313,6 @@ Martingale residuals are a type of residuals used in survival analysis
 that show the discrepancy between the observed and expected number of
 events. $MartingaleResiduals = ObservedEvents - ExpectedEvents$
 
-Residuals can first be found by using the `resid(type = "martingale")`
-function and passing martingale in the type argument creating a vector
-of residuals that can be plotted against the range of values for each
-covariate.
-
 If the resulting residuals are linear and appear to have a slope of
 zero, this assumption is not violated.[@Amini2015]
 
@@ -355,7 +341,7 @@ industries, such as the medical field, because observation times for the
 subjects involved in studies may have decades before an event is
 observed and the event may not have the opportunity to occur during the
 study period. In this scenario, it would not be appropriate to consider
-this subject when modeling survival.
+this subject when modeling survival.[@Amini2015]
 
 #### Independence Assumption
 
@@ -363,7 +349,7 @@ Survival times of observed subjects should be independent of each other.
 In an example where survival of plane engines were being evaluated, if
 each plane has two engines and the failure of one engine caused the
 accelerated failure of another due to increased workload, it would
-produce biased conclusions and violate the independence assumption.
+produce biased conclusions and violate the independence assumption.[@Amini2015]
 
 ### Model Evaluation
 
@@ -388,13 +374,18 @@ no pairs correctly ordered. The higher the concordance index for the
 created model, the more accurately it can model survival for the
 data.[@Therneau2017]
 
-### Model Visualization
+### Model Visualization and Prediction
 
 There are multiple different methods to visualize data when creating a
 Cox proportional hazards model. Survival curves are a popular way to
-show survival probabilities over time, but there are other
+visualize survival probabilities over time, but there are other
 visualizations that are helpful when interpreting the results of the
 model.
+
+Cox proportional hazards models can produce an assortment of useful
+metrics to interpret the model as described by the equations above. The model created can be used to
+estimate risk of the event occurring, rate of occurrence, survival
+probability, and time to event.
 
 #### Forest Plot
 
@@ -406,9 +397,7 @@ confidence interval for the effect. A positive effect indicates a
 positive correlation with the hazard with a higher number signifying a
 more severe effect on the hazard ratio.
 
-A forest plot will be created using the `plot_model()` function from the
-sjPlot package. The CPH model can be passed as the sole argument to
-visualize the hazard ratios. An example forest plot is shown below
+An example forest plot is shown below
 plotting the hazard ratio for each covariate in the model. The point
 represents the calculated hazard ratio and the whiskers show the 95%
 confidence interval.
@@ -429,16 +418,14 @@ plot_model(example_coxmodel,
 After generating the CPH model, a Kaplan-Meier survival curve can be
 generated to view survival probabilities against time. These plots are
 important when modeling survival data because they clearly demonstrate
-the time where the event being modeled for is expected to occur. ' The
-survival curve will be plotted by using the survival package's
-`survfit()` function. The object created will be plotted using `plot()`
+the time where the event being modeled for is expected to occur.
 
 Below is an example survival curve showing survival probabilities over
 time. The line represents the median survival probability with the red
 area around it showing the 95% confidence interval for the values. The
 curve can be interpreted as showing the probability of event would be
 expected to happen around a time of 300 where the survival probability
-is below 50%.
+is below 50%.[@Kuitunen2021]
 
 ```{r, echo=FALSE}
 example_curve <- survfit(example_coxmodel)
@@ -452,17 +439,6 @@ ggsurvplot(example_curve,
 
 ```
 
-### Model Applications and Predictions
-
-Cox proportional hazards models can produce an assortment of useful
-metrics to interpret the model. The model created can be used to
-estimate risk of the event occurring, rate of occurrence, survival
-probability, and time to event.
-
-Survival probabilities can be calculated in R by using
-`stats::predict()` after creating a CPH model. This function will be
-used to create a column showing the survival probability for each row in
-the testing data.
 
 #### Predicting Time Until Event
 
@@ -472,9 +448,7 @@ be assumed the event occurred. Predictions for time until event will be
 made on the testing data for each individual's maximum time value. A
 column will be added to the table showing the expected time until event.
 
-Tim until event can be modeled in R by passing the `type = "lp"`
-argument in the `stats::predict()` function to get a value for linear
-predictor.
+
 
 ## Analysis and Results
 
@@ -507,6 +481,8 @@ engines have failed so all values in the test column will be 0 for still
 working. For the training data, we know that the data includes all
 cycles up to the last cycle when the machine will fail. As such, we will
 have 0s in all cycles except the last cycle of the machine.
+
+Below are tables showing the structure of the training and testing data after the transformations describd above.
 
 **Testing Data**
 
@@ -594,7 +570,7 @@ autoplot(km_fit) + theme_bw()
 #### Choosing Covariates
 
 Below is a univariate test to determine which covariates to use in the
-model
+model. 
 
 ```{r}
 covariates <- c("os1", "os2", "os3", "sm1", "sm2", "sm3", "sm4", "sm5", "sm6", "sm7",
@@ -628,31 +604,156 @@ kable(as.data.frame(univ_results))
 
 #### Creating Model
 
-```{r}
-cox <- coxph(Surv(time, status) ~ os1 + os3 + sm1 + sm2 + sm5,
-             data = train,
-             id = id)
+To generate the CPH model, a
+survival object must first be created using the R package `survival`.
+The survival object is created by running `Surv(time, event)` where
+`time` is the time field and `event` is the event field.
 
-summary(cox)
-```
-
-#### Checking Assumptions
-
-**Checking Proportional Hazards Assumption**
+To create the CPH model, the survival object is then applied to the R
+function `coxph(survival object ~ x, data)` where `x` represents one or
+multiple covariate(s) and `data` is the survival data that is being
+modeled.[@R-base].
 
 ```{r}
-cox.zph(cox)
+cox1 <- coxph(data = train, 
+             Surv(time, status) ~ os1 + os3 + sm1 + sm2 + sm5 + sm6 + sm7 + sm11 + sm12 + sm13 + sm14 + sm19 + sm20 + sm21)
 
-plot(cox.zph(cox))
+cox2 <- coxph(data = train, 
+             Surv(time, status) ~ os1 + os3 + sm1 + sm2 + sm5)
+
+cox3 <- coxph(data = train, 
+             Surv(time, status) ~ os1 + os3 + sm1 + sm5 + sm6 + sm7 + sm13 + sm14 + sm19 + sm21)
+
+cox4 <- coxph(data = train, 
+             Surv(time, status) ~ sm5 + sm6 + sm7 + sm11 + sm12 + sm13 + sm14 + sm19 + sm20 + sm21)
+
+cox5 <- coxph(data = train, 
+             Surv(time, status) ~ os1 + os3 + sm1 + sm2 + sm5  + sm7 + sm11 + sm12 + sm13 + sm19 + sm20 )
+
+cox6 <- coxph(data = train, 
+             Surv(time, status) ~ os1  + sm1 + sm2 + sm5  + sm7 + sm11 + sm12 + sm13 + sm19  + sm21)
+
+cox7 <- coxph(data = train, 
+             Surv(time, status) ~ os1  + sm13 + sm14 + sm19 + sm20)
+
+cox8 <- coxph(data = train, 
+             Surv(time, status) ~ os1 + os3 + sm21)
+
+cox9 <- coxph(data = train, 
+             Surv(time, status) ~ os1 + os3 + sm2 + sm5 + sm6 + sm12 + sm13  + sm19 + sm20 + sm21)
+
+cox10 <- coxph(data = train, 
+             Surv(time, status) ~  os3 + sm1 + sm2 + sm5 + sm6  + sm11 + sm12 + sm13  + sm19 + sm20 + sm21)
+
 
 ```
 
-**Checking Linearity Assumption**
+The resulting models and their corresponding concordance index values are below. 
 
+```{r}
+concordance_results <- data.frame(row.names = c(
+  "Model 1",
+  "Model 2",
+  "Model 3",
+  "Model 4",
+  "Model 5",
+  "Model 6",
+  "Model 7",
+  "Model 8",
+  "Model 9",
+  "Model 10"),
+  Concordance = c(
+  cox1$concordance[6],
+  cox2$concordance[6],
+  cox3$concordance[6],
+  cox4$concordance[6],
+  cox5$concordance[6],
+  cox6$concordance[6],
+  cox7$concordance[6],
+  cox8$concordance[6],
+  cox9$concordance[6],
+  cox10$concordance[6]))
+
+
+kable(concordance_results)
+
+```
+
+The analysis will proceed using model 1 because of the high concordance index. The full summary of model 1 is below.
+
+```{r}
+summary(cox1)
+
+```
+
+
+### Checking Assumptions
+
+Despite the high concordance value for model 1, the assumptions will need to be evaluated before using the model to make predictions. If any of the assumptions for the model are not true, the model will need to be modified
+
+#### Checking Proportional Hazards Assumption
+The `cox.zph` function can be used to check the proportional hazards assumption. As mentioned above, the function calculates p values for each covariate. If the p values are < .05, the null hypothesis is rejected indicating the proportional hazards assumption is true. If the proportional hazards assumption is not true for any covariate, the model will be recreated without those covariates.
+
+```{r}
+cox.zph(cox1)
+```
+The output above shows the p values for the hypothesis test. 
+
+In addition to the hypothesis test, the Shoenfeld residuals calculated by the `cox.zph()` function are plotted against time below.
+
+```{r}
+# Function to put ph_plots on one visual
+create_ph_plots <- function(coxmodel){
+  # Function takes argument that is a cox model from coxph()
+  
+  phresults <- cox.zph(coxmodel)
+
+  # Define dimensions of visual
+  par(mfrow = c(3,5),
+      mar = c(2,2,4,1))
+
+
+  # Loop through each covariate creating a plot and adding it to the phplot list
+  for (i in 1:(length(phresults$table[,1])-1)){
+    phplots <- list()
+    phplots[i] <- plot(phresults[i], # Create plot for each iteration
+                       main = rownames(phresults$table)[i]) # Title of each plot is the rowname from coxmodel$table
+  
+  }
+  mtext("Schoenfeld Residuals vs. Time for Covariates", side = 3, line = -1.5, outer = TRUE, cex = 1) # Title for Visual
+  par(mfrow = c(1,1)) # Reset plotting area
+}
+
+create_ph_plots(cox1)
+```
+
+The proportional hazards test shows several covariates do not meet the proportional hazards assumption. 
+
+The model is recreated below with another proportional hazards test.
+
+```{r}
+
+cox1.1 <- coxph(data = train, 
+             Surv(time, status) ~ os1 + os3 + sm1 + sm2 + sm5 + sm6 + sm7 + sm11 + sm12 + sm13 + sm14 + sm19 + sm20 + sm21)
+cox.zph(cox1.1)
+
+```
+
+
+
+The hypothesis test shows the covariates sm1, sm2, sm6, sm7, sm11, sm12, sm20, and sm21 do not meet the proportional hazards assumption. The model is created again below with a second hypothesis test showing all of the covariates pass the hypothesis test.
+
+
+#### Checking Linearity Assumption
+
+Residuals can first be found by using the `resid(type = "martingale")`
+function and passing martingale in the type argument creating a vector
+of residuals that can be plotted against the range of values for each
+covariate.
 Example for one predictor
 
 ```{r}
-martingale <- resid(cox, type = "martingale")
+martingale <- resid(cox1.1, type = "martingale")
 
 plot(train$os1, martingale, main = "Martingale Residuals: os1")
 abline(h = 0, col = "red")
@@ -660,7 +761,7 @@ abline(h = 0, col = "red")
 
 ```
 
-**Checking Independent Censoring**
+#### Checking Independent Censoring
 
 In the dataset being used for this model, the training data does not
 contain censored data. The documentation available at the dataset's
@@ -673,8 +774,12 @@ desired event of failure.
 
 Forest Plot
 
+A forest plot will be created using the `plot_model()` function from the
+sjPlot package. The CPH model can be passed as the sole argument to
+visualize the hazard ratios.
+
 ```{r}
-plot_model(cox,dot.size = 4,line.size = 2,colors = "red")+
+plot_model(cox1.1,dot.size = 4,line.size = 2,colors = "red")+
   theme_bw()+
   labs(title = "Estimated Effects of Covariates on Hazard Ratios")+
   ylab(label = "Covariates")+
@@ -683,8 +788,11 @@ plot_model(cox,dot.size = 4,line.size = 2,colors = "red")+
 
 survival curve
 
+ The
+survival curve will be plotted by using the survival package's
+`survfit()` function. The object created will be plotted using `plot()`
 ```{r}
-survfit <- survfit(cox)
+survfit <- survfit(cox1.1)
 
 ggsurvplot(survfit, data = test)
 ```
@@ -694,21 +802,21 @@ ggsurvplot(survfit, data = test)
 Create df with max time for each individual to use in predictions
 
 ```{r}
-predictiondata <- test %>%
-  group_by(id) %>%
-  slice_max(time) %>%
-  select(id, time, os1, os3, sm1, sm2, sm5, status)
+#predictiondata <- test %>%
+  #group_by(id) %>%
+  #slice_max(time) %>%
+  #select(id, time, os1, os3, sm1, sm2, sm5, status)
 
-coef <- data.frame(Variable = c("Z1", "Z2", "Z3", "Z4", "Z5"),
-           CoefficientValue = cox$coefficients)
-kable(coef)
+#coef <- data.frame(Variable = c("Z1", "Z2", "Z3", "Z4", "Z5"),
+           #CoefficientValue = cox1.1$coefficients)
+#kable(coef)
 ```
 
 Hazard Rate Calculation:
 $h(t|Z) = h_0(t) * e^{B_1Z_1 + B_2Z_2 + B_3Z_3+B_4Z_4+B_5Z_5}$
 
 ```{r}
-test$hazardrates <- predict(cox,
+test$hazardrates <- predict(cox1.1,
         newdata = test,
         type = "risk")
 
@@ -727,12 +835,21 @@ test <- test %>%
 Predicting survival probability
 
 ```{r}
-test$survprob <- predict(cox, type = "survival", newdata = test)
+test$survprob <- predict(cox1.1, type = "survival", newdata = test)
 
 ```
 
 Probability Calculation: $S(t) = e^{-H(t)}$ $H(t)$ is the cumulative
 hazard up to time $t$
+
+Tim until event can be modeled in R by passing the `type = "lp"`
+argument in the `stats::predict()` function to get a value for linear
+predictor.
+
+```{r}
+
+```
+
 
 A study was conducted to determine how...Modeling and Results
 
