@@ -1,0 +1,208 @@
+---
+title: "Cox Proportional Hazards Practice"
+format: html
+editor: visual
+self-contained: true
+execute: 
+  warning: false
+  message: false
+---
+
+#### General Examination of Data
+
+```{r}
+#libraries
+library(tidyverse)
+library(survival)
+library(survminer)
+library(ggpubr)
+library(magrittr)
+library(ggfortify)
+```
+
+Dataset is from the Mayo Clinic Primary Biliary Cirrhosis data on Kaggle: <https://www.kaggle.com/datasets/jixing475/mayo-clinic-primary-biliary-cirrhosis-data>
+
+```{r}
+pbc <- read.csv('C:/Users/jayre/Desktop/Capstone/pbc.csv')
+
+head(pbc, n = 5)
+```
+
+Columns:
+
+-   id: case number
+-   time: number of days between registration and the earlier of death, transplantion, or study analysis time in July, 1986
+-   status: 0=alive, 1=liver transplant, 2=dead
+-   trt: 1= D-penicillamine, 2=placebo
+-   age: in days
+-   sex: 0=male, 1=female
+-   ascites: presence of ascites (0=no 1=yes)
+-   hepato: presence of hepatomegaly (0=no 1=yes)
+-   spiders: presence of spiders (0=no 1=yes)
+-   edema: presence of edema (0=no edema and no diuretic therapy for edema; .5 = edema present without diuretics, or edema resolved by diuretics; 1 = edema despite diuretic therapy)
+-   bili: serum bilirubin in mg/dl
+-   chol: serum cholesterol in mg/dl
+-   albumin: in gm/dl
+-   copper: urine copper in ug/day
+-   alk.phos: alkaline phosphatase in U/liter
+-   ast: SGOT in U/ml
+-   trig: triglicerides in mg/dl
+-   platelet: per cubic ml / 1000
+-   protime: prothrombin time in seconds
+-   state: histologic stage of disease
+
+```{r}
+#sex needs to be 0,1, need no na's in the treatment column, and don't want the transplant category in status
+pbc <- pbc %>% 
+        mutate(sex = if_else(sex == "f", 1, 0)) %>%
+        na.omit(trt) %>%
+        filter(status != 1)
+
+#switch status to be 1 (alive) or 2 (deceased)
+pbc <- pbc %>% mutate(status = if_else(status == 0, 1, 2))
+
+head(pbc, n = 5)
+
+```
+
+#### Kaplan-Meier Survival Curves and Log-Rate Tests
+
+```{r}
+#Generate the Kaplan-Meier survival curve and plot it with ggplot
+#pull out time and status
+t <- pbc[, "time"]
+s <- pbc[, "status"]
+
+km_fit <- survfit(Surv(t, s) ~ 1)
+
+autoplot(km_fit) + theme_bw()
+```
+
+```{r}
+#generate the probability of survival at certain times between registration and death 
+summary(km_fit, times = c(1:5, 50, 100, 150*(1:10), 300*(5:15)))
+```
+
+```{r}
+#check km with sex
+sex <- pbc[, "sex"]
+km_sex <- survfit(Surv(t, s) ~ sex)
+
+autoplot(km_sex) + theme_bw()
+```
+
+Can use the log-rank test from the survival test to compare the curves between the two groups.
+
+Hypothesis test:
+
+-   $H_0$: in terms of survivability, there is no difference between the two groups
+-   $H_1$: there is a survival differential b/w the two groups
+
+Use $\alpha = 0.05$ as the comparison for the p-value
+
+```{r}
+#log rank test to see the impact based on sex
+survdiff(Surv(t, s) ~ sex)
+```
+
+p-value = $0.03 < \alpha$ so we reject the hull hypothesis as there is enough evidence of a survival difference b/w males and females.
+
+```{r}
+pbc %>% summarise(mean = mean(age))
+#mean age = 50 so check for <= 50 (0) and > 50 (1) 
+pbc <- pbc %>% mutate(age2 = if_else(age > 50, 1, 0))
+
+age <- pbc[, "age2"]
+
+survdiff(Surv(t, s) ~ age)
+```
+
+p-value $< 0.005 < \alpha$ so we reject the null hypothesis as there is evidence of a difference in survival between those older than 50 and those younger than 50.
+
+```{r}
+#plot curve
+km_age <- survfit(Surv(t, s) ~ age)
+autoplot(km_age) + theme_bw()
+```
+
+```{r}
+#check with treatment
+trt <- pbc[, "trt"]
+survdiff(Surv(t, s) ~ trt)
+```
+
+$p = 0.6 > \alpha$ so we fail to reject the null hypothesis as there is insufficient evidence of a difference in survivability b/w treatment groups.
+
+#### Univariate Cox Models
+
+(mostly for practice in understanding the models)
+
+```{r}
+#sex
+coxph(Surv(time, status) ~ sex, data = pbc) %>%
+  summary()
+```
+
+log-rank matches the test from above with $p = 0.03$
+
+```{r}
+#age
+coxph(Surv(time, status) ~ age, data = pbc) %>%
+  summary()
+```
+
+```{r}
+#trt
+coxph(Surv(time, status) ~ trt, data = pbc) %>%
+  summary()
+```
+
+#### Multivariate Models
+
+```{r}
+m <- coxph(Surv(time, status) ~ age2 + sex + trt, data = pbc)
+
+m %>% summary()
+```
+
+For all three tests (likelihood ratio, Wald, and logrank) $p < .005$ which is $< \alpha = 0.05$ so the overall model is significant and we reject the omnibus hypothesis (all $\beta$s are 0).
+
+In the multivariate world, we can see that trt is not significant as the p-value is $> \alpha = 0.05$. However, age and trt are still significant as their p-values are $< \alpha$.
+
+The HRs are:
+
+-   age: 2.0781
+-   sex: 0.6163
+-   trt: 0.9650
+
+The HR for age and the lower p-value indicate a strong relationship b/w the patient's age and increased risk of death. Specific wording: holding the other covariates constant, an increased age is associated with a poor survivall.
+
+#### Testing Assumptions
+
+```{r}
+#proportional hazards
+cox.zph(m)
+ggcoxzph(cox.zph(m))
+```
+
+All p-values are $> \alpha$ so we do not have any coefficients with that are still time dependent.
+
+```{r}
+#non-linearity
+m_resid <- residuals(m, type = "martingale")
+
+ggplot(data = pbc, mapping = aes(x = age2, y = m_resid)) + 
+  geom_point() + 
+  geom_smooth() + 
+  theme_bw()
+```
+
+```{r}
+#use the continuous age for comparison
+ggplot(data = pbc, mapping = aes(x = age, y = m_resid)) + 
+  geom_point() + 
+  geom_smooth() + 
+  theme_bw()
+```
+
+The continuous version of age would be in violation, but the categorical one is not.
