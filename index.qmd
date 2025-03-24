@@ -35,6 +35,7 @@ library(ggpubr)
 library(magrittr)
 library(ggfortify)
 library(knitr)
+library(ezcox)
 library(sjPlot)
 
 ```
@@ -193,7 +194,7 @@ and the outcome. The interpretation of the HR is
 -   if HR $> 1$ implies a positive association such that
     $100\% \times (HR - 1)$ is the \\% of greater risk for $Z = z+1$
     when compared to $Z = z$.
--   if HR $< 1$ implies a negatie association such that
+-   if HR $< 1$ implies a negative association such that
     $100\% \times (HR -1)$ is the \\% of decreased risk for $Z = z+1$
     when compared to $Z= z$.
 -   if HR $=1$ implies no association. [@nahhas2025]
@@ -202,7 +203,9 @@ An additional useful equation is the cumulative hazard function. The
 cumulative hazard function can be defined as
 
 $$
+\begin{align*}
  H(x) = \int_0^x h(u) du 
+\end{align*}
 $$ {#eq-cumulativehr}
 
 where $h(u)$ is the hazard rate function [@klein2005]. This function
@@ -226,7 +229,7 @@ removed from the final CPH model.
 #generation of the model for sample plots
 example_surv_object <- Surv(time = lung$time, event = lung$status)
 
-example_coxmodel <- coxph(example_surv_object ~ meal.cal + age, data = lung)
+example_coxmodel <- coxph(example_surv_object ~ meal.cal, data = lung)
 ```
 
 There are four assumptions that a CPH model must meet in order to be an
@@ -256,15 +259,19 @@ CPH assumes the relationship between covariates and the outcome is a
 linear relationship [@nahhas2025]. For CPH, the outcome for that
 relationship is the log of the hazard rate. This assumption is checked
 visually using the Martingale residuals for each covariate
-[@nahhas2025]. Martingale residuals are a type of residauls used in
+[@nahhas2025]. Martingale residuals are a type of residuals used in
 survival analysis that show the discrepancy between the observed and the
 expected number of events. The equation is $$
+\begin{align*}
 \text{Martingale Residuals} = \text{Observed Events} - \text{Expected Events}
-$$ The resulting residuals are examined visually and if they are linear
-and appear to have a slope of zero, the linearity assumption is not
-violated [@Amini2015]. If a model is being generated with multiple
-covariates, multiple Martingale residual plots will need to be generated
-in order to verify this assumption for each covariate.
+\end{align*}
+$$
+
+The resulting residuals are examined visually and if they are linear and
+appear to have a slope of zero, the linearity assumption is not violated
+[@Amini2015]. If a model is being generated with multiple covariates,
+multiple Martingale residual plots will need to be generated in order to
+verify this assumption for each covariate.
 
 Below is an example plot showing Martingale residuals plotted for a
 covariate being tested. From the plot, it is visually clear that the
@@ -283,86 +290,121 @@ abline(h = 0, col = "red")
 
 **Proportional Hazards Assumption**
 
-The major assumption for CPH is the proportional hazards assumption
+The major assumption for CPH is the proportional hazards (PH) assumption
 which states that the ratio of hazard rates for any two subjects must be
 constant at all times. This means the effect of the covariates must be
 constant over time [@Bustan2018]. To test this assumption, the
-hypothesis test below is used along with Schoenfeld partial residuals.
-
-$$
+hypothesis test below is used: $$
 \begin{align*}
 H_0&: \text{the predictor's coefficient does vary with time} \\
 H_1&: \text{the predictor's coefficient does not vary with time}
 \end{align*}
 $$
 
-The scaled Schoenfeld partial residuals are calcuated and returns the
-$\chi^2$ value, the degrees of freedom, and p-values for each individual
-covariate along with a global value. Using an $\alpha = 0.05$ and the
-global p-value, the determination of whether to reject or fail to reject
-$H_0$ can be made. In addition to the hypothesis test, these Shoenfeld
-residuals can be plotted against time for each covariate to visualize
-the assumption. When plotting the residuals against time, if the
-assumption is not broken it would be expected that the points show
-roughly a straight horizontal line to indicate constant hazard over time
-[@nahhas2025].
+To generate the p-value for the hypothesis test, the scaled Schoenfeld
+partial residuals are calculated for each covariate. The Schoenfeld
+partial residuals are the difference between the value of the covariate
+and the expected value of the covariate at the time of failure
+[@klein2005]. To visually confirm the PH assumption, the plot of the
+scaled Schoenfeld partial residuals for each covariate should be a
+horizontal line [@harrison2021]. The global p–value will provide the
+p-value for all covariates in the model which can be compared to an
+$\alpha = 0.05$ to determine if the PH assumption has been met for all
+covariates [@nahhas2025].
 
-Individual plots for each covariate are generated which provide a visual
-interpretation of the p-values generated from `cox.zph()`. If there is
-no clear slope in the residuals on the plot, it signifies further
-confirmation the proportional hazards assumption is met.
+Violations of the PH assumption can be dealt with in several ways. If
+the covariate is categorical, one way is to stratify the covariate which
+will generate a separate baseline hazard function for each level of the
+covariate [@harrison2021]. This removes the PH assumption for that
+covariate, though it will still be assumed for all other covariates in
+each level of the stratification [@nahhas2025]. If the covariate is
+continuous, one way is to add in a function of time based on the shape
+of the hazard ratio plot. This replaces the model's time coefficient
+with a function of time as it assumes the covariate varies either
+linearly or non-linearly with time [@nahhas2025].
 
-Below is an example plot demonstrating Shoenfeld residuals plotted
-against time to test the proportional hazards assumption. While there is
-some curvature in the line, the residuals are roughly horizontal
-indicating proportional hazard over time for this covariate. In a model
-with multiple covariates, each one would need to be visualized to ensure
-it does not break this assumption and can be used in the model.
+Below is an example plot demonstrating scaled Shoenfeld partial
+residuals plotted against time to test the proportional hazards
+assumption. While there is some curvature in the line, the residuals are
+roughly horizontal indicating proportional hazard over time for this
+covariate.
 
-```{example_phtest <- cox.zph(example_coxmodel)}
+```{r, echo = FALSE}
+example_phtest <- cox.zph(example_coxmodel)
 
 plot(example_phtest[1],
      ylab = "Covariate Schoenfeld Residual",
      xlab = "Time")
 ```
 
-### Evaluation
+Below is an example of the global value that can be generated for the
+whole model. In comparing it with an $\alpha = 0.05$, the covariate does
+not meet the proportional hazards assumption as $p = 0.128 < \alpha$ .
+However, individually, meal.cal does meet the assumption as
+$p = 0.044 < \alpha$ . As such, age would need to be adapted based on
+one of the above methods in order to include it in the model.
 
-**Concordance Index**
+```{r, echo=FALSE}
+multi <- coxph(example_surv_object ~ meal.cal + age, data = lung)
+ph_tibble <- cox.zph(multi) %>%
+  pluck("table") %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("variable") %>%
+  as_tibble()
+kable(ph_tibble, format = "markdown")
+```
 
-To evaluate the model, the Cox regression concordance index can be used.
-Two observed pairs are said to be concordant if an event that is
-expected to occur before another does occur first. For example, if two
-engines are selected from the data and the model predicts one of them to
-be at a higher risk of failure than the other and the one with the
-higher risk fails first, then the pairs are concordant. If the
-alternative happens where the lower risk engine experiences failure
-first, then the pairs are discordant.
+### Model Visualization 
 
-The concordance index is calculated as follows:
+Two common model visualizations used for CPH is the forest plot and the
+Kaplan-Meier survival curve. The Kaplan-Meier curve assists in
+visualizing the initial survival model for the data while the forest
+plot assists in visualizing the hazard ratio after generating a model.
 
-$C = \frac{ConcordantPairs}{ConcordantPairs + DiscordantPairs}$
+**Kaplan Meier Survival Curve**
 
-The concordance index will produce a value between 0 and 1 with 1
-meaning all pairs are correctly ordered and 0 being the alternative with
-no pairs correctly ordered. The higher the concordance index for the
-created model, the more accurately it can model survival for the
-data.[@Therneau2017]
+The Kaplan-Meier (KM) estimator is also known as the Product-Limit
+estimator and was proposed by Kaplan and Meier in 1958. The estimator
+can be defined as
 
-### Model Visualization and Prediction
+$$
+\hat{S}(t) = \begin{cases}
+1 \qquad \qquad \qquad \: \text{if } \; t< t_1,\\
+\prod_{t_\leq t}[1 - \frac{d_j}{Y_i}], \quad\text{if} \; t_1 \leq t
+\end{cases}
+$$ {#eq-km} where,
 
-There are multiple different methods to visualize data when creating a
-Cox proportional hazards model. Survival curves are a popular way to
-visualize survival probabilities over time, but there are other
-visualizations that are helpful when interpreting the results of the
-model.
+-   $d_i$ is the number of events at time $t_i$
+-   $Y_i$ is the number of individuals who are risk at time $t_i$
+    [@klein2005]
 
-Cox proportional hazards models can produce an assortment of useful
-metrics to interpret the model as described by the equations above. The
-model created can be used to estimate risk of the event occurring, rate
-of occurrence, survival probability, and time to event.
+KM is a non-parametric estimate which means it makes no assumption of
+the shape of the base survival function [@nahhas2025] and is considered
+to be well defined up until the largest observed study time $t_{max}$
+[@klein2005]. The survival curve provides a visualization of the KM
+estimator and are important when modeling survival data because it
+demonstrates the time where the event being modeled is expected to
+occur.
 
-#### Forest Plot
+Below is an example survival curve showing survival probabilities over
+time. The line represents the median survival probability with the red
+area around it showing the 95% confidence interval for the values. The
+curve can be interpreted as showing the probability of event would be
+expected to happen around a time of 300 where the survival probability
+is below 50% [@Kuitunen2021].
+
+```{r, echo=FALSE}
+example_curve <- survfit(example_coxmodel)
+
+ggsurvplot(example_curve,
+           data = lung,
+           title = "Example Survival Curve",
+           xlab = "Time",
+           ylab = "Survival Probability",
+           legend = "none")
+```
+
+**Forest Plots**
 
 Forest plots can be used to visualize the effects of each covariate in
 the model on the hazard ratio. The resulting plot contains each
@@ -377,7 +419,9 @@ covariate in the model. The point represents the calculated hazard ratio
 and the whiskers show the 95% confidence interval.
 
 ```{r, echo=FALSE,warning=FALSE}
-plot_model(example_coxmodel,
+forest <- coxph(example_surv_object ~ age + sex, data = lung)
+
+plot_model(forest,
            dot.size = 1,
            line.size = 1,
            colors = "red")+
@@ -385,41 +429,51 @@ plot_model(example_coxmodel,
   labs(title = "Estimated Effects of Covariates on Hazard Ratios")+
   ylab(label = "Covariates")+
   xlab(label = "Estimated Effect on Hazard Ratio")
-```
-
-#### Kaplan-Meier Survival Curve
-
-After generating the CPH model, a Kaplan-Meier survival curve can be
-generated to view survival probabilities against time. These plots are
-important when modeling survival data because they clearly demonstrate
-the time where the event being modeled for is expected to occur.
-
-Below is an example survival curve showing survival probabilities over
-time. The line represents the median survival probability with the red
-area around it showing the 95% confidence interval for the values. The
-curve can be interpreted as showing the probability of event would be
-expected to happen around a time of 300 where the survival probability
-is below 50%.[@Kuitunen2021]
-
-```{r, echo=FALSE}
-example_curve <- survfit(example_coxmodel)
-
-ggsurvplot(example_curve,
-           data = lung,
-           title = "Example Survival Curve",
-           xlab = "Time",
-           ylab = "Survival Probability",
-           legend = "none")
+show_forest(lung, covariates = c('age'))
 
 ```
 
-#### Predicting Time Until Event
+### Evaluation
 
-Time until event can be calculated by modeling survival probability for
-future time values. When survival probability drops below 50%, it will
-be assumed the event occurred. Predictions for time until event will be
-made on the testing data for each individual's maximum time value. A
-column will be added to the table showing the expected time until event.
+Evaluation of the accuracy of the CPH model is done using the
+concordance index which is used to measure the amount of agreement
+between two variables. Specifically, the value looks at concordant pairs
+and disconcordant pairs. A concordant pair is when either $x_i < x_j$
+and $y_i < y_j$ or $x_i > x_j$ and $y_i > y_j$. A discordant pair is
+when either $x_i$ or $y_i$ are not in the same place such as $x_i < x_j$
+but $y_j < y_i$ [@Therneau2017]. In terms of survival, this can be
+thought of as examining when the failure event occurs. If two subjects,
+A and B, are compared with subject A having a higher risk, the pair
+would be considered concordant if subject A does have the failure event
+occur before subject B.
+
+The equation for concordance with CPH is
+
+$$
+C =\frac{c + \frac{t_x}{2}}{c + d + t_x}
+$$ {#eq-concordance}
+
+where,
+
+-   $c$ is the count of pairs that are concordant
+-   $d$ is the count of pairs that are discordant
+-   $t_x$ are the pairs tied to the predictor $x$ [@Therneau2017]
+
+The concordance index will produce a value between 0 and 1. A value of 1
+means all pairs are correctly ordered and a value 0 being the
+alternative with no pairs correctly ordered. Any values between 0 and 1
+indicate how accurate the CPH model is with the data [@Therneau2017].
+
+### Prediction
+
+CPH can be used to predict the survival probability at a specific time
+$S(t|X=x)$, and the hazard ratio for an individual when compared to a
+reference individual $\frac{h(t|X=x)}{h(t|X=x_{ref}}$ [@nahhas2025]. If
+the resulting probability is greater than or equal to 50%, it is assumed
+the event has not occurred. If the resulting probability is less than
+50%, it is assumed the event has occurred. It is also possible to
+generate a plot of the estimated survival curves for all values of $t$
+that are desired.
 
 ## Analysis and Results
 
