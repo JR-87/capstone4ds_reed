@@ -721,6 +721,19 @@ summary(cox1)
 
 ```
 
+The forest plot for model 1 is shown below. Values closer to 1 indicate the hazard ratio for that covariate have less effect on the calculated hazard ratio.
+
+```{r}
+plot_model(cox1,
+           dot.size = 2,
+           line.size = 1,
+           colors = "red")+
+  theme_bw()+
+  labs(title = "Estimated Effects of Covariates on Hazard Ratios")+
+  ylab(label = "Covariates")+
+  xlab(label = "Estimated Effect on Hazard Ratio")
+```
+
 ### Checking Assumptions
 
 Despite the high concordance value for model 1, the assumptions will
@@ -748,13 +761,13 @@ by the `cox.zph()` function are plotted against time below.
 
 ```{r}
 # Function to put ph_plots on one visual
-create_ph_plots <- function(coxmodel){
+create_ph_plots <- function(coxmodel, row, col){
   # Function takes argument that is a cox model from coxph()
   
   phresults <- cox.zph(coxmodel)
 
   # Define dimensions of visual
-  par(mfrow = c(3,5),
+  par(mfrow = c(row, col),
       mar = c(2,2,4,1))
 
 
@@ -769,26 +782,29 @@ create_ph_plots <- function(coxmodel){
   par(mfrow = c(1,1)) # Reset plotting area
 }
 
-create_ph_plots(cox1)
+create_ph_plots(cox1, 3, 5)
 ```
 
 The proportional hazards test shows several covariates do not meet the
 proportional hazards assumption.
 
-The model is recreated below with another proportional hazards test.
+The model is recreated below with another proportional hazards test. To improve the model and ensure the proportional hazards assumption is met, several covariates that do not meet the assumption are removed.
 
 ```{r}
+cox1.1 <- coxph(data = train,Surv(time, status) ~ sm2 + sm5 + sm7 + sm11 + sm12 + sm20 + sm21)
 
-cox1.1 <- coxph(data = train, 
-             Surv(time, status) ~ os1 + os3 + sm1 + sm2 + sm5 + sm6 + sm7 + sm11 + sm12 + sm13 + sm14 + sm19 + sm20 + sm21)
 cox.zph(cox1.1)
+
+
+```
+The new model has seven covariates with only one not meeting the proportional hazards assumption. Although sm5 does not have a p value > .05, the assumption overall holds for the new model and sm5 was not removed from the model because of its large impact on the hazard ratio shown in the forest plot. The new model's full summary is below.
+
+```{r}
+summary(cox1.1)
 
 ```
 
-The hypothesis test shows the covariates sm1, sm2, sm6, sm7, sm11, sm12,
-sm20, and sm21 do not meet the proportional hazards assumption. The
-model is created again below with a second hypothesis test showing all
-of the covariates pass the hypothesis test.
+
 
 #### Checking Linearity Assumption
 
@@ -797,39 +813,52 @@ function and passing martingale in the type argument creating a vector
 of residuals that can be plotted against the range of values for each
 covariate. Example for one predictor
 
+
 ```{r}
+
+par(mfrow = c(3,3),
+      mar = c(2,2,4,1))
+
 martingale <- resid(cox1.1, type = "martingale")
 
-plot(train$os1, martingale, main = "Martingale Residuals: os1")
+
+plot(train$sm2, martingale, main = "Martingale Residuals: sm2")
+abline(h = 0, col = "red")
+
+plot(train$sm5, martingale, main = "Martingale Residuals: sm5")
+abline(h = 0, col = "red")
+
+plot(train$sm7, martingale, main = "Martingale Residuals: sm7")
+abline(h = 0, col = "red")
+
+plot(train$sm11, martingale, main = "Martingale Residuals: sm11")
+abline(h = 0, col = "red")
+
+plot(train$sm12, martingale, main = "Martingale Residuals: sm12")
+abline(h = 0, col = "red")
+
+plot(train$sm20, martingale, main = "Martingale Residuals: sm20")
+abline(h = 0, col = "red")
+
+plot(train$sm21, martingale, main = "Martingale Residuals: sm21")
 abline(h = 0, col = "red")
 
 
 ```
+The plots of the martingale residuals vs the range of values for each covariate is shown above. For each covariate, there is no clear slope indicating the linearity assumption is true for the covariates in the model. 
+
 
 #### Checking Independent Censoring
 
 In the dataset being used for this model, the training data does not
 contain censored data. The documentation available at the dataset's
 source clarifies all engines in the training data have experienced the
-desired event of failure.
+desired event of failure at the end of each time series.
 
 ### Model Evaluation
 
 ### Model Visualization
 
-Forest Plot
-
-A forest plot will be created using the `plot_model()` function from the
-sjPlot package. The CPH model can be passed as the sole argument to
-visualize the hazard ratios.
-
-```{r}
-plot_model(cox1.1,dot.size = 4,line.size = 2,colors = "red")+
-  theme_bw()+
-  labs(title = "Estimated Effects of Covariates on Hazard Ratios")+
-  ylab(label = "Covariates")+
-  xlab(label = "Estimated Effect on Hazard Ratio")
-```
 
 survival curve
 
