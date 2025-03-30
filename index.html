@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Jayme Reed &amp; Brad Paton (Advisor: Dr. Cohen)">
-<meta name="dcterms.date" content="2025-03-25">
+<meta name="dcterms.date" content="2025-03-30">
 
 <title>Predicting Remaining Useful Life of NASA Aircraft Engines</title>
 <style>
@@ -3070,10 +3070,8 @@ vertical-align: -.125em;
   <li><a href="#data-structure-exploration-and-visualization" id="toc-data-structure-exploration-and-visualization" class="nav-link" data-scroll-target="#data-structure-exploration-and-visualization">Data Structure, Exploration, and Visualization</a></li>
   <li><a href="#creating-cox-proportional-hazards-model" id="toc-creating-cox-proportional-hazards-model" class="nav-link" data-scroll-target="#creating-cox-proportional-hazards-model">Creating Cox Proportional Hazards Model</a></li>
   <li><a href="#checking-assumptions" id="toc-checking-assumptions" class="nav-link" data-scroll-target="#checking-assumptions">Checking Assumptions</a></li>
-  <li><a href="#model-evaluation" id="toc-model-evaluation" class="nav-link" data-scroll-target="#model-evaluation">Model Evaluation</a></li>
   <li><a href="#model-visualization-1" id="toc-model-visualization-1" class="nav-link" data-scroll-target="#model-visualization-1">Model Visualization</a></li>
   <li><a href="#model-applications-and-predictions" id="toc-model-applications-and-predictions" class="nav-link" data-scroll-target="#model-applications-and-predictions">Model Applications and Predictions</a></li>
-  <li><a href="#results" id="toc-results" class="nav-link" data-scroll-target="#results">Results</a></li>
   </ul></li>
   <li><a href="#conclusion" id="toc-conclusion" class="nav-link" data-scroll-target="#conclusion">Conclusion</a></li>
   <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
@@ -3102,7 +3100,7 @@ vertical-align: -.125em;
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">March 25, 2025</p>
+      <p class="date">March 30, 2025</p>
     </div>
   </div>
   
@@ -3763,39 +3761,45 @@ C =\frac{c + \frac{t_x}{2}}{c + d + t_x}
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(id) <span class="sc">%&gt;%</span></span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">time =</span> <span class="fu">max</span>(time))</span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>summarymetrics <span class="ot">&lt;-</span> <span class="fu">summary</span>(<span class="at">Minimum =</span> <span class="fu">min</span>(time),</span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>                          <span class="at">Median =</span> <span class="fu">median</span>(time),</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>                          <span class="at">StandardDeviation =</span> <span class="fu">sd</span>(time),</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>                          <span class="at">Maximum =</span> <span class="fu">max</span>(time), </span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>                          distributions<span class="sc">$</span>time) </span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">tibble</span>(summarymetrics), <span class="at">format =</span> <span class="st">&quot;markdown&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>summarymetrics <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="fu">c</span>(<span class="st">&quot;Minimum&quot;</span>, <span class="st">&quot;Median&quot;</span>, <span class="st">&quot;Mean&quot;</span>, <span class="st">&quot;Standard Deviation&quot;</span>, <span class="st">&quot;Maximum&quot;</span>),</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>                             <span class="fu">c</span>(<span class="fu">min</span>(distributions<span class="sc">$</span>time), </span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>                               <span class="fu">median</span>(distributions<span class="sc">$</span>time),</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>                               <span class="fu">mean</span>(distributions<span class="sc">$</span>time),</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>                               <span class="fu">sd</span>(distributions<span class="sc">$</span>time),</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>                               <span class="fu">max</span>(distributions<span class="sc">$</span>time)))</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(summarymetrics) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">&quot;Metric&quot;</span>, <span class="st">&quot;Value&quot;</span>)</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>summarymetrics<span class="sc">$</span>Value <span class="ot">&lt;-</span> <span class="fu">round</span>(summarymetrics<span class="sc">$</span>Value, <span class="at">digits =</span> <span class="dv">2</span>)</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(summarymetrics)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <table class="table table-sm table-striped small">
 <thead>
 <tr class="header">
-<th style="text-align: right;">summarymetrics</th>
+<th style="text-align: left;">Metric</th>
+<th style="text-align: right;">Value</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: right;">128.0</td>
+<td style="text-align: left;">Minimum</td>
+<td style="text-align: right;">128.00</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">174.0</td>
+<td style="text-align: left;">Median</td>
+<td style="text-align: right;">199.00</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">199.0</td>
+<td style="text-align: left;">Mean</td>
+<td style="text-align: right;">206.77</td>
 </tr>
 <tr class="even">
-<td style="text-align: right;">206.8</td>
+<td style="text-align: left;">Standard Deviation</td>
+<td style="text-align: right;">46.78</td>
 </tr>
 <tr class="odd">
-<td style="text-align: right;">230.2</td>
-</tr>
-<tr class="even">
-<td style="text-align: right;">378.0</td>
+<td style="text-align: left;">Maximum</td>
+<td style="text-align: right;">378.00</td>
 </tr>
 </tbody>
 </table>
@@ -4039,39 +4043,35 @@ C =\frac{c + \frac{t_x}{2}}{c + d + t_x}
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>cox <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="fu">Surv</span>(time, status) <span class="sc">~</span> os1 <span class="sc">+</span> os3 <span class="sc">+</span> sm1 <span class="sc">+</span> sm2 <span class="sc">+</span> sm5,</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>             <span class="at">data =</span> train,</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>             <span class="at">id =</span> id)</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>cox1 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="at">data =</span> train, </span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>             <span class="fu">Surv</span>(time, status) <span class="sc">~</span> os1 <span class="sc">+</span> os3 <span class="sc">+</span> sm1 <span class="sc">+</span> sm2 <span class="sc">+</span> sm5 <span class="sc">+</span> sm6 <span class="sc">+</span> sm7 <span class="sc">+</span> sm11 <span class="sc">+</span> sm12 <span class="sc">+</span> sm13 <span class="sc">+</span> sm14 <span class="sc">+</span> sm19 <span class="sc">+</span> sm20 <span class="sc">+</span> sm21)</span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>cox2 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="at">data =</span> train, </span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>             <span class="fu">Surv</span>(time, status) <span class="sc">~</span> os1 <span class="sc">+</span> os3 <span class="sc">+</span> sm1 <span class="sc">+</span> sm2 <span class="sc">+</span> sm5)</span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>cox3 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="at">data =</span> train, </span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>             <span class="fu">Surv</span>(time, status) <span class="sc">~</span> os1 <span class="sc">+</span> os3 <span class="sc">+</span> sm1 <span class="sc">+</span> sm5 <span class="sc">+</span> sm6 <span class="sc">+</span> sm7 <span class="sc">+</span> sm13 <span class="sc">+</span> sm14 <span class="sc">+</span> sm19 <span class="sc">+</span> sm21)</span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>cox4 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="at">data =</span> train, </span>
-<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>             <span class="fu">Surv</span>(time, status) <span class="sc">~</span> sm5 <span class="sc">+</span> sm6 <span class="sc">+</span> sm7 <span class="sc">+</span> sm11 <span class="sc">+</span> sm12 <span class="sc">+</span> sm13 <span class="sc">+</span> sm14 <span class="sc">+</span> sm19 <span class="sc">+</span> sm20 <span class="sc">+</span> sm21)</span>
-<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>cox5 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="at">data =</span> train, </span>
-<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>             <span class="fu">Surv</span>(time, status) <span class="sc">~</span> os1 <span class="sc">+</span> os3 <span class="sc">+</span> sm1 <span class="sc">+</span> sm2 <span class="sc">+</span> sm5  <span class="sc">+</span> sm7 <span class="sc">+</span> sm11 <span class="sc">+</span> sm12 <span class="sc">+</span> sm13 <span class="sc">+</span> sm19 <span class="sc">+</span> sm20 )</span>
-<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>cox6 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="at">data =</span> train, </span>
-<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>             <span class="fu">Surv</span>(time, status) <span class="sc">~</span> os1  <span class="sc">+</span> sm1 <span class="sc">+</span> sm2 <span class="sc">+</span> sm5  <span class="sc">+</span> sm7 <span class="sc">+</span> sm11 <span class="sc">+</span> sm12 <span class="sc">+</span> sm13 <span class="sc">+</span> sm19  <span class="sc">+</span> sm21)</span>
-<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>cox7 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="at">data =</span> train, </span>
-<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>             <span class="fu">Surv</span>(time, status) <span class="sc">~</span> os1  <span class="sc">+</span> sm13 <span class="sc">+</span> sm14 <span class="sc">+</span> sm19 <span class="sc">+</span> sm20)</span>
-<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>cox8 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="at">data =</span> train, </span>
-<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>             <span class="fu">Surv</span>(time, status) <span class="sc">~</span> os1 <span class="sc">+</span> os3 <span class="sc">+</span> sm21)</span>
-<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>cox9 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="at">data =</span> train, </span>
-<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>             <span class="fu">Surv</span>(time, status) <span class="sc">~</span> os1 <span class="sc">+</span> os3 <span class="sc">+</span> sm2 <span class="sc">+</span> sm5 <span class="sc">+</span> sm6 <span class="sc">+</span> sm12 <span class="sc">+</span> sm13  <span class="sc">+</span> sm19 <span class="sc">+</span> sm20 <span class="sc">+</span> sm21)</span>
-<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a>cox10 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="at">data =</span> train, </span>
-<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a>             <span class="fu">Surv</span>(time, status) <span class="sc">~</span>  os3 <span class="sc">+</span> sm1 <span class="sc">+</span> sm2 <span class="sc">+</span> sm5 <span class="sc">+</span> sm6  <span class="sc">+</span> sm11 <span class="sc">+</span> sm12 <span class="sc">+</span> sm13  <span class="sc">+</span> sm19 <span class="sc">+</span> sm20 <span class="sc">+</span> sm21)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>cox1 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="at">data =</span> train, <span class="at">id =</span> id,</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>             <span class="fu">Surv</span>(time, status) <span class="sc">~</span> os1 <span class="sc">+</span> os3 <span class="sc">+</span> sm1 <span class="sc">+</span> sm2 <span class="sc">+</span> sm5 <span class="sc">+</span> sm6 <span class="sc">+</span> sm7 <span class="sc">+</span> sm11 <span class="sc">+</span> sm12 <span class="sc">+</span> sm13 <span class="sc">+</span> sm14 <span class="sc">+</span> sm19 <span class="sc">+</span> sm20 <span class="sc">+</span> sm21)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>cox2 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="at">data =</span> train, <span class="at">id =</span> id,</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>             <span class="fu">Surv</span>(time, status) <span class="sc">~</span> os1 <span class="sc">+</span> os3 <span class="sc">+</span> sm1 <span class="sc">+</span> sm2 <span class="sc">+</span> sm5)</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>cox3 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="at">data =</span> train, <span class="at">id =</span> id,</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>             <span class="fu">Surv</span>(time, status) <span class="sc">~</span> os1 <span class="sc">+</span> os3 <span class="sc">+</span> sm1 <span class="sc">+</span> sm5 <span class="sc">+</span> sm6 <span class="sc">+</span> sm7 <span class="sc">+</span> sm13 <span class="sc">+</span> sm14 <span class="sc">+</span> sm19 <span class="sc">+</span> sm21)</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>cox4 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="at">data =</span> train, <span class="at">id =</span> id,</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>             <span class="fu">Surv</span>(time, status) <span class="sc">~</span> sm5 <span class="sc">+</span> sm6 <span class="sc">+</span> sm7 <span class="sc">+</span> sm11 <span class="sc">+</span> sm12 <span class="sc">+</span> sm13 <span class="sc">+</span> sm14 <span class="sc">+</span> sm19 <span class="sc">+</span> sm20 <span class="sc">+</span> sm21)</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>cox5 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="at">data =</span> train, <span class="at">id =</span> id,</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>             <span class="fu">Surv</span>(time, status) <span class="sc">~</span> os1 <span class="sc">+</span> os3 <span class="sc">+</span> sm1 <span class="sc">+</span> sm2 <span class="sc">+</span> sm5  <span class="sc">+</span> sm7 <span class="sc">+</span> sm11 <span class="sc">+</span> sm12 <span class="sc">+</span> sm13 <span class="sc">+</span> sm19 <span class="sc">+</span> sm20 )</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>cox6 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="at">data =</span> train, <span class="at">id =</span> id,</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>             <span class="fu">Surv</span>(time, status) <span class="sc">~</span> os1  <span class="sc">+</span> sm1 <span class="sc">+</span> sm2 <span class="sc">+</span> sm5  <span class="sc">+</span> sm7 <span class="sc">+</span> sm11 <span class="sc">+</span> sm12 <span class="sc">+</span> sm13 <span class="sc">+</span> sm19  <span class="sc">+</span> sm21)</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>cox7 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="at">data =</span> train, <span class="at">id =</span> id,</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>             <span class="fu">Surv</span>(time, status) <span class="sc">~</span> os1  <span class="sc">+</span> sm13 <span class="sc">+</span> sm14 <span class="sc">+</span> sm19 <span class="sc">+</span> sm20)</span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>cox8 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="at">data =</span> train, <span class="at">id =</span> id,</span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>             <span class="fu">Surv</span>(time, status) <span class="sc">~</span> os1 <span class="sc">+</span> os3 <span class="sc">+</span> sm21)</span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>cox9 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="at">data =</span> train, <span class="at">id =</span> id,</span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>             <span class="fu">Surv</span>(time, status) <span class="sc">~</span> os1 <span class="sc">+</span> os3 <span class="sc">+</span> sm2 <span class="sc">+</span> sm5 <span class="sc">+</span> sm6 <span class="sc">+</span> sm12 <span class="sc">+</span> sm13  <span class="sc">+</span> sm19 <span class="sc">+</span> sm20 <span class="sc">+</span> sm21)</span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>cox10 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="at">data =</span> train, <span class="at">id =</span> id,</span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>             <span class="fu">Surv</span>(time, status) <span class="sc">~</span>  os3 <span class="sc">+</span> sm1 <span class="sc">+</span> sm2 <span class="sc">+</span> sm5 <span class="sc">+</span> sm6  <span class="sc">+</span> sm11 <span class="sc">+</span> sm12 <span class="sc">+</span> sm13  <span class="sc">+</span> sm19 <span class="sc">+</span> sm20 <span class="sc">+</span> sm21)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <p>The resulting models and their corresponding concordance index values are below.</p>
@@ -4167,7 +4167,7 @@ C =\frac{c + \frac{t_x}{2}}{c + d + t_x}
 <pre><code>Call:
 coxph(formula = Surv(time, status) ~ os1 + os3 + sm1 + sm2 + 
     sm5 + sm6 + sm7 + sm11 + sm12 + sm13 + sm14 + sm19 + sm20 + 
-    sm21, data = train)
+    sm21, data = train, id = id)
 
   n= 53759, number of events= 260 
 
@@ -4397,9 +4397,6 @@ Score (logrank) test = 654  on 7 df,   p=&lt;2e-16</code></pre>
 <p>In the dataset being used for this model, the training data does not contain censored data. The documentation available at the dataset’s source clarifies all engines in the training data have experienced the desired event of failure at the end of each time series.</p>
 </section>
 </section>
-<section id="model-evaluation" class="level3">
-<h3 class="anchored" data-anchor-id="model-evaluation">Model Evaluation</h3>
-</section>
 <section id="model-visualization-1" class="level3">
 <h3 class="anchored" data-anchor-id="model-visualization-1">Model Visualization</h3>
 <p>survival curve</p>
@@ -4407,69 +4404,450 @@ Score (logrank) test = 654  on 7 df,   p=&lt;2e-16</code></pre>
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>survfit <span class="ot">&lt;-</span> <span class="fu">survfit</span>(cox1<span class="fl">.1</span>)</span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsurvplot</span>(survfit, <span class="at">data =</span> test)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>survfit <span class="ot">&lt;-</span> <span class="fu">survfit</span>(cox1<span class="fl">.1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
-<div class="cell-output-display">
-<p><img src="data:image/png;base64,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bAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokE6UbAkokM6u2Tp9eVwUR/d+3nh5VNQ8KF+bvFi/8LwxDgEFstkxW++O50E8+r7++raAfn0ooMA+2S1b47YkbgtoZWEBBfbATtkqtylvTvfePzwqim9+aVlo2tLbyy8a3VyPQ0CBbHbK1jSJtz6VX5SHNx9sX2a8XObspD2yAgoktEu2ptk8+nH+5efjZSY3TDdSF8tMl96+yHwcAgpks0u2pnFcJrHS0rqT1abpdOnbHeMQUCCbXbI1LtZJPNl+gHO9A19++fz08TSUd3/YNg4BBbLZMaCrA5/bzxBVN0xHxdF3i3Pw95q78gIKpLNLtqrRHG89izSqb6OuVA6Grl/cYSQA12DQgK7PIM1P1B89/VTeu1RUlxVQIKtBA1o9SFqJ6ah61aiAAlkNGdC2U/PlxujmAVMBBdIZMqCtF4eOmgsLKJDOkGfht3Sy+Q8uxyGgQDYDXgfaenG9gAJ7YcA7kVr34LdtrgookM6A98LX9+Ar31WvblqNQ0CBbAacjemklslpYhfXLk1OiuZd8QIKpLP7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" class="img-fluid" width="672"></p>
-</div>
 </div>
 </section>
 <section id="model-applications-and-predictions" class="level3">
 <h3 class="anchored" data-anchor-id="model-applications-and-predictions">Model Applications and Predictions</h3>
-<p>Create df with max time for each individual to use in predictions</p>
+<p>The model created can be used to calculate several relevant metrics when predicting remaining time for the engines until expected failure. Predictions will be made on the largest value for time for each individual engine.</p>
+<section id="model-coefficients" class="level4">
+<h4 class="anchored" data-anchor-id="model-coefficients">Model Coefficients</h4>
+<p>The CPH model created produced coefficients for each covariate indicating the quantitative effect on the resulting hazard rate. The coefficients are shown below.</p>
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="co">#predictiondata &lt;- test %&gt;%</span></span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  <span class="co">#group_by(id) %&gt;%</span></span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  <span class="co">#slice_max(time) %&gt;%</span></span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>  <span class="co">#select(id, time, os1, os3, sm1, sm2, sm5, status)</span></span>
-<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a><span class="co">#coef &lt;- data.frame(Variable = c(&quot;Z1&quot;, &quot;Z2&quot;, &quot;Z3&quot;, &quot;Z4&quot;, &quot;Z5&quot;),</span></span>
-<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>           <span class="co">#CoefficientValue = cox1.1$coefficients)</span></span>
-<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a><span class="co">#kable(coef)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>coef <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">CoefficientValue =</span> cox1<span class="fl">.1</span><span class="sc">$</span>coefficients)</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(coef)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: right;">CoefficientValue</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">sm2</td>
+<td style="text-align: right;">-0.3815223</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">sm5</td>
+<td style="text-align: right;">18.9651689</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">sm7</td>
+<td style="text-align: right;">-0.3078915</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">sm11</td>
+<td style="text-align: right;">8.2628437</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">sm12</td>
+<td style="text-align: right;">-0.0767446</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">sm20</td>
+<td style="text-align: right;">-0.7719817</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">sm21</td>
+<td style="text-align: right;">-2.0664553</td>
+</tr>
+</tbody>
+</table>
 </div>
-<p>Hazard Rate Calculation: <span class="math inline">\(h(t|Z) = h_0(t) * e^{B_1Z_1 + B_2Z_2 + B_3Z_3+B_4Z_4+B_5Z_5}\)</span></p>
+</div>
+</section>
+<section id="hazard-rate-calculation" class="level4">
+<h4 class="anchored" data-anchor-id="hazard-rate-calculation">Hazard Rate Calculation</h4>
+<p>The coefficients above can be used to calculate the hazard rate at time <span class="math inline">\(t\)</span>. The hazard rate will be calculated for each engine at the engines max time value.</p>
+<p>Hazard Rate: <span class="math inline">\(h(t|Z) = h_0(t) * e^{B_1Z_1 + B_2Z_2 + B_3Z_3+B_4Z_4+B_5Z_5}\)</span></p>
+<p>The engines with the higher hazard rates are at a higher risk of experiencing failure.</p>
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>test<span class="sc">$</span>hazardrates <span class="ot">&lt;-</span> <span class="fu">predict</span>(cox1<span class="fl">.1</span>,</span>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>test<span class="sc">$</span>HazardRate <span class="ot">&lt;-</span> <span class="fu">predict</span>(cox1<span class="fl">.1</span>,</span>
 <span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>        <span class="at">newdata =</span> test,</span>
-<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>        <span class="at">type =</span> <span class="st">&quot;risk&quot;</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>        <span class="at">type =</span> <span class="st">&quot;risk&quot;</span>)</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>predictiondata <span class="ot">&lt;-</span> test <span class="sc">%&gt;%</span></span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(id) <span class="sc">%&gt;%</span></span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_max</span>(time) <span class="sc">%&gt;%</span></span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">CumulativeHazard =</span> <span class="fu">cumsum</span>(HazardRate)) <span class="sc">%&gt;%</span></span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(id, time, sm2, sm5, sm7, sm11, sm12, sm20, sm21, status, HazardRate)</span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(predictiondata <span class="sc">%&gt;%</span> <span class="fu">select</span>(id, time, sm2, sm5, sm7, sm11, sm12, sm20, sm21, HazardRate)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<colgroup>
+<col style="width: 4%">
+<col style="width: 7%">
+<col style="width: 10%">
+<col style="width: 9%">
+<col style="width: 10%">
+<col style="width: 9%">
+<col style="width: 10%">
+<col style="width: 9%">
+<col style="width: 12%">
+<col style="width: 16%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">id</th>
+<th style="text-align: right;">time</th>
+<th style="text-align: right;">sm2</th>
+<th style="text-align: right;">sm5</th>
+<th style="text-align: right;">sm7</th>
+<th style="text-align: right;">sm11</th>
+<th style="text-align: right;">sm12</th>
+<th style="text-align: right;">sm20</th>
+<th style="text-align: right;">sm21</th>
+<th style="text-align: right;">HazardRate</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">258</td>
+<td style="text-align: right;">605.42</td>
+<td style="text-align: right;">10.52</td>
+<td style="text-align: right;">393.58</td>
+<td style="text-align: right;">45.89</td>
+<td style="text-align: right;">370.87</td>
+<td style="text-align: right;">28.30</td>
+<td style="text-align: right;">17.0934</td>
+<td style="text-align: right;">45.0933958</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">55</td>
+<td style="text-align: right;">642.67</td>
+<td style="text-align: right;">14.62</td>
+<td style="text-align: right;">553.36</td>
+<td style="text-align: right;">47.43</td>
+<td style="text-align: right;">521.10</td>
+<td style="text-align: right;">38.82</td>
+<td style="text-align: right;">23.3463</td>
+<td style="text-align: right;">0.1849201</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">165</td>
+<td style="text-align: right;">555.86</td>
+<td style="text-align: right;">5.48</td>
+<td style="text-align: right;">194.58</td>
+<td style="text-align: right;">41.91</td>
+<td style="text-align: right;">183.11</td>
+<td style="text-align: right;">14.75</td>
+<td style="text-align: right;">8.9589</td>
+<td style="text-align: right;">0.0605868</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">86</td>
+<td style="text-align: right;">607.99</td>
+<td style="text-align: right;">9.35</td>
+<td style="text-align: right;">334.39</td>
+<td style="text-align: right;">44.48</td>
+<td style="text-align: right;">314.88</td>
+<td style="text-align: right;">24.22</td>
+<td style="text-align: right;">14.6814</td>
+<td style="text-align: right;">0.7000321</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">148</td>
+<td style="text-align: right;">550.81</td>
+<td style="text-align: right;">3.91</td>
+<td style="text-align: right;">138.42</td>
+<td style="text-align: right;">42.43</td>
+<td style="text-align: right;">130.82</td>
+<td style="text-align: right;">10.34</td>
+<td style="text-align: right;">6.3601</td>
+<td style="text-align: right;">41.3999224</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">63</td>
+<td style="text-align: right;">555.70</td>
+<td style="text-align: right;">5.48</td>
+<td style="text-align: right;">194.96</td>
+<td style="text-align: right;">41.84</td>
+<td style="text-align: right;">182.57</td>
+<td style="text-align: right;">14.69</td>
+<td style="text-align: right;">8.9375</td>
+<td style="text-align: right;">0.0366607</td>
+</tr>
+</tbody>
+</table>
 </div>
+</div>
+</section>
+<section id="cumulative-hazard-calculation" class="level4">
+<h4 class="anchored" data-anchor-id="cumulative-hazard-calculation">Cumulative Hazard Calculation</h4>
+<p>The cumulative hazard represents the total hazard accumulated for the individual over time and like the hazard rate, is another measure that can be used to estimate the risk for the individual at a point in time. The cumulative hazard for each individual is shown below. Higher values represent a higher chance of failure.</p>
 <p><span class="math inline">\(H(t) = \int_0^t h(t) dt\)</span> where, <span class="math inline">\(H(t)\)</span> is the cumulative hazard from time 0 to time <span class="math inline">\((t)\)</span> <span class="math inline">\(h(t)\)</span> is the hazard rate at time <span class="math inline">\(t\)</span></p>
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>test <span class="ot">&lt;-</span> test <span class="sc">%&gt;%</span></span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(id, time) <span class="sc">%&gt;%</span></span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(id) <span class="sc">%&gt;%</span></span>
-<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">cumulative_hazard =</span> <span class="fu">cumsum</span>(hazardrates))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(predictiondata))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<colgroup>
+<col style="width: 4%">
+<col style="width: 6%">
+<col style="width: 9%">
+<col style="width: 8%">
+<col style="width: 9%">
+<col style="width: 8%">
+<col style="width: 9%">
+<col style="width: 8%">
+<col style="width: 10%">
+<col style="width: 9%">
+<col style="width: 15%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">id</th>
+<th style="text-align: right;">time</th>
+<th style="text-align: right;">sm2</th>
+<th style="text-align: right;">sm5</th>
+<th style="text-align: right;">sm7</th>
+<th style="text-align: right;">sm11</th>
+<th style="text-align: right;">sm12</th>
+<th style="text-align: right;">sm20</th>
+<th style="text-align: right;">sm21</th>
+<th style="text-align: right;">status</th>
+<th style="text-align: right;">HazardRate</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">258</td>
+<td style="text-align: right;">605.42</td>
+<td style="text-align: right;">10.52</td>
+<td style="text-align: right;">393.58</td>
+<td style="text-align: right;">45.89</td>
+<td style="text-align: right;">370.87</td>
+<td style="text-align: right;">28.30</td>
+<td style="text-align: right;">17.0934</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">45.0933958</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">55</td>
+<td style="text-align: right;">642.67</td>
+<td style="text-align: right;">14.62</td>
+<td style="text-align: right;">553.36</td>
+<td style="text-align: right;">47.43</td>
+<td style="text-align: right;">521.10</td>
+<td style="text-align: right;">38.82</td>
+<td style="text-align: right;">23.3463</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.1849201</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">165</td>
+<td style="text-align: right;">555.86</td>
+<td style="text-align: right;">5.48</td>
+<td style="text-align: right;">194.58</td>
+<td style="text-align: right;">41.91</td>
+<td style="text-align: right;">183.11</td>
+<td style="text-align: right;">14.75</td>
+<td style="text-align: right;">8.9589</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.0605868</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">86</td>
+<td style="text-align: right;">607.99</td>
+<td style="text-align: right;">9.35</td>
+<td style="text-align: right;">334.39</td>
+<td style="text-align: right;">44.48</td>
+<td style="text-align: right;">314.88</td>
+<td style="text-align: right;">24.22</td>
+<td style="text-align: right;">14.6814</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.7000321</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">148</td>
+<td style="text-align: right;">550.81</td>
+<td style="text-align: right;">3.91</td>
+<td style="text-align: right;">138.42</td>
+<td style="text-align: right;">42.43</td>
+<td style="text-align: right;">130.82</td>
+<td style="text-align: right;">10.34</td>
+<td style="text-align: right;">6.3601</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">41.3999224</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">63</td>
+<td style="text-align: right;">555.70</td>
+<td style="text-align: right;">5.48</td>
+<td style="text-align: right;">194.96</td>
+<td style="text-align: right;">41.84</td>
+<td style="text-align: right;">182.57</td>
+<td style="text-align: right;">14.69</td>
+<td style="text-align: right;">8.9375</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.0366607</td>
+</tr>
+</tbody>
+</table>
 </div>
-<p>Predicting survival probability</p>
+</div>
+</section>
+<section id="survival-probability" class="level4">
+<h4 class="anchored" data-anchor-id="survival-probability">Survival probability</h4>
+<p>While cumulative hazard can be used by itself to give an idea of an individual’s risk, it can also be used to calculate a probability of survival.</p>
+<p>Probability Calculation: <span class="math inline">\(S(t) = e^{-H(t)}\)</span> <span class="math inline">\(H(t)\)</span> is the cumulative hazard up to time <span class="math inline">\(t\)</span>.</p>
 <div class="cell">
 <details>
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>test<span class="sc">$</span>survprob <span class="ot">&lt;-</span> <span class="fu">predict</span>(cox1<span class="fl">.1</span>, <span class="at">type =</span> <span class="st">&quot;survival&quot;</span>, <span class="at">newdata =</span> test)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>predictiondata<span class="sc">$</span>SurvivalProbability <span class="ot">&lt;-</span> <span class="fu">predict</span>(cox1<span class="fl">.1</span>, <span class="at">type =</span> <span class="st">&quot;survival&quot;</span>, <span class="at">newdata =</span> predictiondata)</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(<span class="fu">head</span>(predictiondata))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<colgroup>
+<col style="width: 3%">
+<col style="width: 5%">
+<col style="width: 7%">
+<col style="width: 6%">
+<col style="width: 7%">
+<col style="width: 6%">
+<col style="width: 7%">
+<col style="width: 6%">
+<col style="width: 8%">
+<col style="width: 7%">
+<col style="width: 11%">
+<col style="width: 21%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">id</th>
+<th style="text-align: right;">time</th>
+<th style="text-align: right;">sm2</th>
+<th style="text-align: right;">sm5</th>
+<th style="text-align: right;">sm7</th>
+<th style="text-align: right;">sm11</th>
+<th style="text-align: right;">sm12</th>
+<th style="text-align: right;">sm20</th>
+<th style="text-align: right;">sm21</th>
+<th style="text-align: right;">status</th>
+<th style="text-align: right;">HazardRate</th>
+<th style="text-align: right;">SurvivalProbability</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">258</td>
+<td style="text-align: right;">605.42</td>
+<td style="text-align: right;">10.52</td>
+<td style="text-align: right;">393.58</td>
+<td style="text-align: right;">45.89</td>
+<td style="text-align: right;">370.87</td>
+<td style="text-align: right;">28.30</td>
+<td style="text-align: right;">17.0934</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">45.0933958</td>
+<td style="text-align: right;">0.9776140</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">55</td>
+<td style="text-align: right;">642.67</td>
+<td style="text-align: right;">14.62</td>
+<td style="text-align: right;">553.36</td>
+<td style="text-align: right;">47.43</td>
+<td style="text-align: right;">521.10</td>
+<td style="text-align: right;">38.82</td>
+<td style="text-align: right;">23.3463</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.1849201</td>
+<td style="text-align: right;">1.0000000</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">165</td>
+<td style="text-align: right;">555.86</td>
+<td style="text-align: right;">5.48</td>
+<td style="text-align: right;">194.58</td>
+<td style="text-align: right;">41.91</td>
+<td style="text-align: right;">183.11</td>
+<td style="text-align: right;">14.75</td>
+<td style="text-align: right;">8.9589</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.0605868</td>
+<td style="text-align: right;">0.9999968</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">86</td>
+<td style="text-align: right;">607.99</td>
+<td style="text-align: right;">9.35</td>
+<td style="text-align: right;">334.39</td>
+<td style="text-align: right;">44.48</td>
+<td style="text-align: right;">314.88</td>
+<td style="text-align: right;">24.22</td>
+<td style="text-align: right;">14.6814</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.7000321</td>
+<td style="text-align: right;">1.0000000</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">148</td>
+<td style="text-align: right;">550.81</td>
+<td style="text-align: right;">3.91</td>
+<td style="text-align: right;">138.42</td>
+<td style="text-align: right;">42.43</td>
+<td style="text-align: right;">130.82</td>
+<td style="text-align: right;">10.34</td>
+<td style="text-align: right;">6.3601</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">41.3999224</td>
+<td style="text-align: right;">0.9993176</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">63</td>
+<td style="text-align: right;">555.70</td>
+<td style="text-align: right;">5.48</td>
+<td style="text-align: right;">194.96</td>
+<td style="text-align: right;">41.84</td>
+<td style="text-align: right;">182.57</td>
+<td style="text-align: right;">14.69</td>
+<td style="text-align: right;">8.9375</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.0366607</td>
+<td style="text-align: right;">1.0000000</td>
+</tr>
+</tbody>
+</table>
 </div>
-<p>Probability Calculation: <span class="math inline">\(S(t) = e^{-H(t)}\)</span> <span class="math inline">\(H(t)\)</span> is the cumulative hazard up to time <span class="math inline">\(t\)</span></p>
-<p>Tim until event can be modeled in R by passing the <code>type = &quot;lp&quot;</code> argument in the <code>stats::predict()</code> function to get a value for linear predictor.</p>
-<p>A study was conducted to determine how…Modeling and Results</p>
-<ul>
-<li><p>Explain your data preprocessing and cleaning steps. transformation applied to data to add event</p></li>
-<li><p>Present your key findings in a clear and concise manner.</p></li>
-<li><p>Use visuals to support your claims.</p></li>
-<li><p><strong>Tell a story about what the data reveals.</strong></p></li>
-</ul>
+</div>
 </section>
-<section id="results" class="level3">
-<h3 class="anchored" data-anchor-id="results">Results</h3>
+<section id="predicting-time-until-failure" class="level4">
+<h4 class="anchored" data-anchor-id="predicting-time-until-failure">Predicting Time Until Failure</h4>
+<p>Time until event can be modeled in R by passing the <code>type = &quot;lp&quot;</code> argument in the <code>stats::predict()</code> function to get a value for linear predictor.</p>
+</section>
 </section>
 </section>
 <section id="conclusion" class="level2">

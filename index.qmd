@@ -549,13 +549,16 @@ distributions <- train %>%
   group_by(id) %>%
   summarise(time = max(time))
 
-summarymetrics <- summary(Minimum = min(time),
-                          Median = median(time),
-                          StandardDeviation = sd(time),
-                          Maximum = max(time), 
-                          distributions$time) 
+summarymetrics <- data.frame(c("Minimum", "Median", "Mean", "Standard Deviation", "Maximum"),
+                             c(min(distributions$time), 
+                               median(distributions$time),
+                               mean(distributions$time),
+                               sd(distributions$time),
+                               max(distributions$time)))
 
-kable(tibble(summarymetrics), format = "markdown")
+colnames(summarymetrics) <- c("Metric", "Value")
+summarymetrics$Value <- round(summarymetrics$Value, digits = 2)
+kable(summarymetrics)
 
 ```
 
@@ -644,38 +647,34 @@ During the analysis, multiple models will be created with a different
 combination of covariates.
 
 ```{r}
-cox <- coxph(Surv(time, status) ~ os1 + os3 + sm1 + sm2 + sm5,
-             data = train,
-             id = id)
-
-cox1 <- coxph(data = train, 
+cox1 <- coxph(data = train, id = id,
              Surv(time, status) ~ os1 + os3 + sm1 + sm2 + sm5 + sm6 + sm7 + sm11 + sm12 + sm13 + sm14 + sm19 + sm20 + sm21)
 
-cox2 <- coxph(data = train, 
+cox2 <- coxph(data = train, id = id,
              Surv(time, status) ~ os1 + os3 + sm1 + sm2 + sm5)
 
-cox3 <- coxph(data = train, 
+cox3 <- coxph(data = train, id = id,
              Surv(time, status) ~ os1 + os3 + sm1 + sm5 + sm6 + sm7 + sm13 + sm14 + sm19 + sm21)
 
-cox4 <- coxph(data = train, 
+cox4 <- coxph(data = train, id = id,
              Surv(time, status) ~ sm5 + sm6 + sm7 + sm11 + sm12 + sm13 + sm14 + sm19 + sm20 + sm21)
 
-cox5 <- coxph(data = train, 
+cox5 <- coxph(data = train, id = id,
              Surv(time, status) ~ os1 + os3 + sm1 + sm2 + sm5  + sm7 + sm11 + sm12 + sm13 + sm19 + sm20 )
 
-cox6 <- coxph(data = train, 
+cox6 <- coxph(data = train, id = id,
              Surv(time, status) ~ os1  + sm1 + sm2 + sm5  + sm7 + sm11 + sm12 + sm13 + sm19  + sm21)
 
-cox7 <- coxph(data = train, 
+cox7 <- coxph(data = train, id = id,
              Surv(time, status) ~ os1  + sm13 + sm14 + sm19 + sm20)
 
-cox8 <- coxph(data = train, 
+cox8 <- coxph(data = train, id = id,
              Surv(time, status) ~ os1 + os3 + sm21)
 
-cox9 <- coxph(data = train, 
+cox9 <- coxph(data = train, id = id,
              Surv(time, status) ~ os1 + os3 + sm2 + sm5 + sm6 + sm12 + sm13  + sm19 + sm20 + sm21)
 
-cox10 <- coxph(data = train, 
+cox10 <- coxph(data = train, id = id,
              Surv(time, status) ~  os3 + sm1 + sm2 + sm5 + sm6  + sm11 + sm12 + sm13  + sm19 + sm20 + sm21)
 
 
@@ -855,7 +854,6 @@ contain censored data. The documentation available at the dataset's
 source clarifies all engines in the training data have experienced the
 desired event of failure at the end of each time series.
 
-### Model Evaluation
 
 ### Model Visualization
 
@@ -868,74 +866,83 @@ The survival curve will be plotted by using the survival package's
 ```{r}
 survfit <- survfit(cox1.1)
 
-ggsurvplot(survfit, data = test)
 ```
 
 ### Model Applications and Predictions
 
-Create df with max time for each individual to use in predictions
+The model created can be used to calculate several relevant metrics when predicting remaining time for the engines until expected failure. Predictions will be made on the largest value for time for each individual engine.
+
+#### Model Coefficients
+
+The CPH model created produced coefficients for each covariate indicating the quantitative effect on the resulting hazard rate. The coefficients are shown below.
 
 ```{r}
-#predictiondata <- test %>%
-  #group_by(id) %>%
-  #slice_max(time) %>%
-  #select(id, time, os1, os3, sm1, sm2, sm5, status)
-
-#coef <- data.frame(Variable = c("Z1", "Z2", "Z3", "Z4", "Z5"),
-           #CoefficientValue = cox1.1$coefficients)
-#kable(coef)
+coef <- data.frame(CoefficientValue = cox1.1$coefficients)
+kable(coef)
 ```
 
-Hazard Rate Calculation:
+#### Hazard Rate Calculation
+
+The coefficients above can be used to calculate the hazard rate at time $t$. The hazard rate will be calculated for each engine at the engines max time value.
+
+Hazard Rate:
 $h(t|Z) = h_0(t) * e^{B_1Z_1 + B_2Z_2 + B_3Z_3+B_4Z_4+B_5Z_5}$
 
+The engines with the higher hazard rates are at a higher risk of experiencing failure.
+
+
 ```{r}
-test$hazardrates <- predict(cox1.1,
+test$HazardRate <- predict(cox1.1,
         newdata = test,
         type = "risk")
 
+
+predictiondata <- test %>%
+  group_by(id) %>%
+  slice_max(time) %>%
+  mutate(CumulativeHazard = cumsum(HazardRate)) %>%
+  select(id, time, sm2, sm5, sm7, sm11, sm12, sm20, sm21, status, HazardRate)
+
+kable(head(predictiondata %>% select(id, time, sm2, sm5, sm7, sm11, sm12, sm20, sm21, HazardRate)))
+
 ```
+
+
+#### Cumulative Hazard Calculation
+
+The cumulative hazard represents the total hazard accumulated for the individual over time and like the hazard rate, is another measure that can be used to estimate the risk for the individual at a point in time. The cumulative hazard for each individual is shown below. Higher values represent a higher chance of failure.
 
 $H(t) = \int_0^t h(t) dt$ where, $H(t)$ is the cumulative hazard from
 time 0 to time $(t)$ $h(t)$ is the hazard rate at time $t$
 
 ```{r}
-test <- test %>%
-  arrange(id, time) %>%
-  group_by(id) %>%
-  mutate(cumulative_hazard = cumsum(hazardrates))
-```
-
-Predicting survival probability
-
-```{r}
-test$survprob <- predict(cox1.1, type = "survival", newdata = test)
+kable(head(predictiondata))
 
 ```
+
+#### Survival probability
+
+While cumulative hazard can be used by itself to give an idea of an individual's risk, it can also be used to calculate a probability of survival. 
 
 Probability Calculation: $S(t) = e^{-H(t)}$ $H(t)$ is the cumulative
-hazard up to time $t$
+hazard up to time $t$.
 
-Tim until event can be modeled in R by passing the `type = "lp"`
+```{r}
+predictiondata$SurvivalProbability <- predict(cox1.1, type = "survival", newdata = predictiondata)
+kable(head(predictiondata))
+
+```
+
+
+#### Predicting Time Until Failure
+
+Time until event can be modeled in R by passing the `type = "lp"`
 argument in the `stats::predict()` function to get a value for linear
 predictor.
 
 ```{r}
 
 ```
-
-A study was conducted to determine how...Modeling and Results
-
--   Explain your data preprocessing and cleaning steps. transformation
-    applied to data to add event
-
--   Present your key findings in a clear and concise manner.
-
--   Use visuals to support your claims.
-
--   **Tell a story about what the data reveals.**
-
-### Results
 
 ## Conclusion
 
