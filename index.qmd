@@ -868,6 +868,17 @@ survfit <- survfit(cox1.1)
 
 ```
 
+```{r}
+ggsurvplot(survfit, data = test, fun = "pct", surv.median.line = "none")
+```
+
+```{r}
+plot(survfit, mark.time=FALSE, xscale=365.24,
+	xlab='Years', ylab='Survival')
+lines(survfit[1], lwd=2, xscale=365.24)
+```
+
+
 ### Model Applications and Predictions
 
 The model created can be used to calculate several relevant metrics when predicting remaining time for the engines until expected failure. Predictions will be made on the largest value for time for each individual engine.
@@ -941,6 +952,8 @@ argument in the `stats::predict()` function to get a value for linear
 predictor.
 
 ```{r}
+
+
 
 ```
 
