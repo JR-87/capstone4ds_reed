@@ -35,8 +35,8 @@ library(ggpubr)
 library(magrittr)
 library(ggfortify)
 library(knitr)
-library(ezcox)
 library(sjPlot)
+library(broom)
 
 ```
 
@@ -354,7 +354,7 @@ ph_tibble <- cox.zph(multi) %>%
 kable(ph_tibble, format = "markdown")
 ```
 
-### Model Visualization 
+### Model Visualization
 
 Two common model visualizations used for CPH is the forest plot and the
 Kaplan-Meier survival curve. The Kaplan-Meier curve assists in
@@ -429,7 +429,6 @@ plot_model(forest,
   labs(title = "Estimated Effects of Covariates on Hazard Ratios")+
   ylab(label = "Covariates")+
   xlab(label = "Estimated Effect on Hazard Ratio")
-show_forest(lung, covariates = c('age'))
 
 ```
 
@@ -464,7 +463,7 @@ means all pairs are correctly ordered and a value 0 being the
 alternative with no pairs correctly ordered. Any values between 0 and 1
 indicate how accurate the CPH model is with the data [@Therneau2017].
 
-### Prediction
+### Survival Prediction
 
 CPH can be used to predict the survival probability at a specific time
 $S(t|X=x)$, and the hazard ratio for an individual when compared to a
@@ -479,38 +478,35 @@ that are desired.
 
 ### Data Structure, Exploration, and Visualization
 
-Though CPH is typically used with health data, we wanted to determine
-how CPH can be used in other fields. As such, we will study the
-remaining useful life (RUL) of a NASA aircraft engine using data
-provided by NASA for the study on propagation modeling [@saxena2008]. In
-particular, we will be examining their data from what they have deemed
-engine two. From the literature review, we have noted that we will need
-to be concerned with the constant hazards ratio within our data and
-determine how we will accommodate censored data when creating our model.
+Though CPH is typically used with health data, it does have applications
+in other fields. This paper will study the remaining useful life (RUL)
+of a NASA aircraft engine using data provided by NASA for the study on
+propagation modeling [@saxena2008]. In particular, this paper will be
+examining the data from the engine make two which has a training dataset
+and a testing dataset.
 
-#### Data Structure
+**Data Structure**
 
-Each engine has an unknown amount of wear, manufacturing variation, and
-sensor noise all of which impact the survival time. In the training
-dataset, each engine is operating normally at the beginning of the time
-series, develops a fault, and experiences failure at the end of the time
-series. The conditions the engines are subjected to are represented by
-three operational setting fields and 21 sensor measurement fields. In
-the testing data, the engines have not experienced failure
-[@saxena2008].
+Each engine in the NASA data has an unknown amount of wear,
+manufacturing variation, and sensor noise which will impact the survival
+time. In the training dataset, each engine is operating normally at the
+beginning of the time series, will develop a fault, and experience
+failure at some point. All engines will have failed in the training
+dataset. The conditions the engines are subjected to are represented by
+three operational setting fields and twenty-one sensor measurement
+fields. In the testing dataset, none of the engines have experienced
+failure [@saxena2008].
 
-For both test and train datasets, we will need to add a column
-indicating status. We will use 0 for still working and 1 for the last
-cycle when the engine fails. For the test data, we know that none of the
-engines have failed so all values in the test column will be 0 for still
-working. For the training data, we know that the data includes all
-cycles up to the last cycle when the machine will fail. As such, we will
-have 0s in all cycles except the last cycle of the machine.
+A column indicating status is needed for both the training and testing
+datasets. The value 0 will be used to indicate if the machine is still
+working and the value 1 will be used for the last cycle before the
+engine fails. Both values will appear in the training dataset as all
+engines in that dataset will eventually fail. The testing dataset will
+only have the value of 0 as none of the machines have failed in that
+dataset.
 
 Below are tables showing the structure of the training and testing data
 after the transformations describd above.
-
-**Testing Data**
 
 ```{r}
 testurl <- 'https://raw.githubusercontent.com/JR-87/capstone4ds_reed/refs/heads/main/test_FD002.txt'
@@ -518,12 +514,8 @@ testurl <- 'https://raw.githubusercontent.com/JR-87/capstone4ds_reed/refs/heads/
 test <- read.delim(testurl, header = TRUE, sep = '') %>%
   mutate(status = 0)
 
-kable(head(test, n = 5), format = "markdown")
-```
+kable(head(test, n = 5), format = "markdown", caption = "Testing Data")
 
-**Training Data**
-
-```{r}
 trainurl <- 'https://raw.githubusercontent.com/JR-87/capstone4ds_reed/refs/heads/main/train_FD002.txt'
 
 train <- read.delim(trainurl, header = TRUE, sep = '') %>%
@@ -531,20 +523,19 @@ train <- read.delim(trainurl, header = TRUE, sep = '') %>%
   mutate(status = if_else(row_number() == n(), 1, 0)) %>%
   ungroup() 
 
-kable(head(train, n = 5), format = "markdown")
+kable(head(train, n = 5), format = "markdown", caption = 'Training Data')
 ```
 
-#### Data Visualization
+**Data Visualization**
 
-The visuals below describe the distribution of the 260 engines in the
-training data. The histogram shows the survival times are normally
-distributed with a median value of 199 iterations and the box plot shows
-there are few outliers out of the 260 engines. The engines have a median
-survival time of 199 iterations with a standard deviation of 46.8. The
-longest surviving engine lasted 378 iterations, with the shortest
-survival time for all engines being 128.
+There are 260 engines in the training data. The histogram shows that the
+survival times of the engines are normally distributed and the box plot
+shows there six outliers in the dataset. The engines have a median
+survival time of 199 cycles with a standard deviation of 46.8. The
+maximum number of cycles an engine lasted was 378 while the minimum
+number of cycles an engined lasted was 128.
 
-```{r}
+```{r, echo = FALSE}
 distributions <- train %>% 
   group_by(id) %>%
   summarise(time = max(time))
@@ -558,7 +549,7 @@ summarymetrics <- data.frame(c("Minimum", "Median", "Mean", "Standard Deviation"
 
 colnames(summarymetrics) <- c("Metric", "Value")
 summarymetrics$Value <- round(summarymetrics$Value, digits = 2)
-kable(summarymetrics)
+kable(summarymetrics, format = "markdown", padding = 0)
 
 ```
 
@@ -583,7 +574,11 @@ grid.arrange(Histogram,box,ncol = 2, top = "Distribution of Engine Longevity in 
 
 ```
 
-The Kaplan-Meier survival curve is shown below.
+To determine the intitial survival function, the Kaplan-Meier survival
+curve was generated and is shown below. The graph verifies that the
+median survival time is roughly 200 cycles and shows the maximum cycle.
+After that cycle has been reached, the survival probability plummets to
+0%.
 
 ```{r}
 t <- as.matrix(train[, "time"])
@@ -596,10 +591,14 @@ autoplot(km_fit) + theme_bw()
 
 ### Creating Cox Proportional Hazards Model
 
-#### Choosing Covariates
+**Covariate Selection**
 
-Below is a univariate test to determine which covariates to use in the
-model.
+Based on the information provided by NASA on their data, there are
+various sensors and operational setting fields that do not impact the
+survival rate of an engine. To determine which covariates will impact
+the survival probability, the below univariate test was run. The
+covariates in which the p-value is $< 0.05$ will be considered for the
+CPH models while the other covariates will be excluded.
 
 ```{r}
 covariates <- c("os1", "os2", "os3", "sm1", "sm2", "sm3", "sm4", "sm5", "sm6", "sm7",
@@ -631,20 +630,26 @@ univ_results <- lapply(univ_models,
 kable(as.data.frame(univ_results))
 ```
 
-#### Creating Model
+Based on the above test, the covariates that will be considered for the
+CPH models are os1, os3, sm1, sm2, sm5, sm6, sm7, sm11, sm12, sm13,
+sm14, sm19, sm20, and sm21 which is fourteen out of twenty-four possible
+covariates.
 
-To generate the CPH model with properly formatted survival data, a
-survival object must first be created using the R package `survival`.
-The survival object is created by running `Surv(time, event)` where
-`time` is the time field and `event` is the event field.
+**Generating Models**
 
-To create the CPH model, the survival object is then applied to the R
-function `coxph(survival object ~ x, data)` where `x` represents one or
-multiple covariate(s) and `data` is the survival data that is being
-modeled.[@R-base].
+Generation of all CPH models will be done using R, specifically the R
+package `survival`. To generate the CPH model with properly formatted
+survival data, a survival object is created by running
+`Surv(time, event)` where `time` is the time field and `event` is the
+event field. To generate the actual model, the survival object is then
+applied to the function `coxph(survival object ~ x, data)` where `x`
+represents one or multiple covariate(s) and `data` is the survival data
+that is being modeled.[@R-base].
 
-During the analysis, multiple models will be created with a different
-combination of covariates.
+The table below provides the model number, the covariates used, and the
+concordance index. The concordance index generates a value to determine
+which model is the most accurate with the provided covariates. After
+determining the most accurate model, the CPH assumptions will be tested.
 
 ```{r}
 cox1 <- coxph(data = train, id = id,
@@ -680,49 +685,45 @@ cox10 <- coxph(data = train, id = id,
 
 ```
 
-The resulting models and their corresponding concordance index values
-are below.
-
 ```{r}
-concordance_results <- data.frame(row.names = c(
-  "Model 1",
-  "Model 2",
-  "Model 3",
-  "Model 4",
-  "Model 5",
-  "Model 6",
-  "Model 7",
-  "Model 8",
-  "Model 9",
-  "Model 10"),
-  Concordance = c(
-  cox1$concordance[6],
-  cox2$concordance[6],
-  cox3$concordance[6],
-  cox4$concordance[6],
-  cox5$concordance[6],
-  cox6$concordance[6],
-  cox7$concordance[6],
-  cox8$concordance[6],
-  cox9$concordance[6],
-  cox10$concordance[6]))
+concordance_results <- data.frame(c("Model 1", "Model 2", "Model 3", "Model 4", "Model 5", 
+                                    "Model 6", "Model 7", "Model 8", "Model 9", "Model 10"), 
+                   c("os1, os3, sm1, sm2, sm5, sm6, sm7, sm11, sm12, sm13, sm14, sm19, sm20, sm21", 
+                     "os1, os3, sm1, sm2, sm5", 
+                     "os1, os3, sm1, sm5, sm6, sm7, sm13, sm14, sm19, sm21", 
+                     "sm5, sm6, sm7, sm11, sm12, sm13, sm14, sm19, sm20, sm21", 
+                     "os1, os3, sm1, sm2, sm5, sm7, sm11, sm12, sm13, sm19, sm20", 
+                     "os1, sm1, sm2, sm5, sm7, sm11, sm12, sm13, sm19, sm21",
+                     "os1, sm13, sm14, sm19, sm20", 
+                     "os1, os3, sm21",
+                     "os1, os3, sm2, sm5, sm6, sm12, sm13, sm19, sm20, sm21",
+                     "os3, sm1, sm2, sm5, sm6, sm11, sm12, sm13, sm19, sm20, sm21"),
+                   c(cox1$concordance[6], cox2$concordance[6], cox3$concordance[6], cox4$concordance[6], cox5$concordance[6], cox6$concordance[6], cox7$concordance[6], cox8$concordance[6], cox9$concordance[6], cox10$concordance[6]))
+
+colnames(concordance_results) <- c("Model", "Covariates", "Concordance Index")
 
 
-kable(concordance_results)
+kable(concordance_results, format = "markdown")
 
 ```
 
-The analysis will proceed using model 1 because of the high concordance
-index. The full summary of model 1 is below.
+Model 1 had the highest concordance index and used all of the covariates
+that were determined to be significant to the survival of the engine.
+The proceeding analysis will be done using model 1. The below tables
+provide the summary values from the model.
 
-```{r}
-summary(cox1)
-
+```{r, echo = FALSE}
+kable(tidy(cox1), format = "markdown")
+g <- glance(cox1)
+g <- g %>% select(n, nevent, concordance, std.error.concordance, logLik, statistic.log, p.value.log, statistic.wald, p.value.wald, statistic.sc, p.value.sc)
+kable(g, format = "markdown")
 ```
 
-The forest plot for model 1 is shown below. Values closer to 1 indicate the hazard ratio for that covariate have less effect on the calculated hazard ratio.
+The forest plot for model 1 is shown below. The covariates that are
+closest to the value of one have a hazard rate that has less effect on
+the calculated hazard ratio for the entire model.
 
-```{r}
+```{r, echo = FALSE}
 plot_model(cox1,
            dot.size = 2,
            line.size = 1,
@@ -735,12 +736,20 @@ plot_model(cox1,
 
 ### Checking Assumptions
 
-Despite the high concordance value for model 1, the assumptions will
-need to be evaluated before using the model to make predictions. If any
-of the assumptions for the model are not true, the model will need to be
-modified
+After determining the model to use with the covariates, the CPH
+assumptions need to be tested to confirm the model is a valid CPH model.
+The model may have a high concordance index, but it may not be valid for
+CPH to use to predict the survival probability. If any of the
+assumptions for the model are not true, the model will need to be
+modified.
 
-#### Checking Proportional Hazards Assumption
+**Independence Assumption**
+
+**Non-informative Censoring Assumption**
+
+**Linearity Assumption**
+
+**Proportional Hazards Assumption**
 
 The `cox.zph` function can be used to check the proportional hazards
 assumption. As mentioned above, the function calculates p values for
@@ -787,7 +796,9 @@ create_ph_plots(cox1, 3, 5)
 The proportional hazards test shows several covariates do not meet the
 proportional hazards assumption.
 
-The model is recreated below with another proportional hazards test. To improve the model and ensure the proportional hazards assumption is met, several covariates that do not meet the assumption are removed.
+The model is recreated below with another proportional hazards test. To
+improve the model and ensure the proportional hazards assumption is met,
+several covariates that do not meet the assumption are removed.
 
 ```{r}
 cox1.1 <- coxph(data = train,Surv(time, status) ~ sm2 + sm5 + sm7 + sm11 + sm12 + sm20 + sm21)
@@ -796,14 +807,17 @@ cox.zph(cox1.1)
 
 
 ```
-The new model has seven covariates with only one not meeting the proportional hazards assumption. Although sm5 does not have a p value > .05, the assumption overall holds for the new model and sm5 was not removed from the model because of its large impact on the hazard ratio shown in the forest plot. The new model's full summary is below.
+
+The new model has seven covariates with only one not meeting the
+proportional hazards assumption. Although sm5 does not have a p value \>
+.05, the assumption overall holds for the new model and sm5 was not
+removed from the model because of its large impact on the hazard ratio
+shown in the forest plot. The new model's full summary is below.
 
 ```{r}
 summary(cox1.1)
 
 ```
-
-
 
 #### Checking Linearity Assumption
 
@@ -811,7 +825,6 @@ Residuals can first be found by using the `resid(type = "martingale")`
 function and passing martingale in the type argument creating a vector
 of residuals that can be plotted against the range of values for each
 covariate. Example for one predictor
-
 
 ```{r}
 
@@ -844,8 +857,11 @@ abline(h = 0, col = "red")
 
 
 ```
-The plots of the martingale residuals vs the range of values for each covariate is shown above. For each covariate, there is no clear slope indicating the linearity assumption is true for the covariates in the model. 
 
+The plots of the martingale residuals vs the range of values for each
+covariate is shown above. For each covariate, there is no clear slope
+indicating the linearity assumption is true for the covariates in the
+model.
 
 #### Checking Independent Censoring
 
@@ -854,9 +870,9 @@ contain censored data. The documentation available at the dataset's
 source clarifies all engines in the training data have experienced the
 desired event of failure at the end of each time series.
 
+### Adjusting the Model 
 
 ### Model Visualization
-
 
 survival curve
 
@@ -878,14 +894,18 @@ plot(survfit, mark.time=FALSE, xscale=365.24,
 lines(survfit[1], lwd=2, xscale=365.24)
 ```
 
-
 ### Model Applications and Predictions
 
-The model created can be used to calculate several relevant metrics when predicting remaining time for the engines until expected failure. Predictions will be made on the largest value for time for each individual engine.
+The model created can be used to calculate several relevant metrics when
+predicting remaining time for the engines until expected failure.
+Predictions will be made on the largest value for time for each
+individual engine.
 
 #### Model Coefficients
 
-The CPH model created produced coefficients for each covariate indicating the quantitative effect on the resulting hazard rate. The coefficients are shown below.
+The CPH model created produced coefficients for each covariate
+indicating the quantitative effect on the resulting hazard rate. The
+coefficients are shown below.
 
 ```{r}
 coef <- data.frame(CoefficientValue = cox1.1$coefficients)
@@ -894,13 +914,15 @@ kable(coef)
 
 #### Hazard Rate Calculation
 
-The coefficients above can be used to calculate the hazard rate at time $t$. The hazard rate will be calculated for each engine at the engines max time value.
+The coefficients above can be used to calculate the hazard rate at time
+$t$. The hazard rate will be calculated for each engine at the engines
+max time value.
 
 Hazard Rate:
 $h(t|Z) = h_0(t) * e^{B_1Z_1 + B_2Z_2 + B_3Z_3+B_4Z_4+B_5Z_5}$
 
-The engines with the higher hazard rates are at a higher risk of experiencing failure.
-
+The engines with the higher hazard rates are at a higher risk of
+experiencing failure.
 
 ```{r}
 test$HazardRate <- predict(cox1.1,
@@ -918,10 +940,13 @@ kable(head(predictiondata %>% select(id, time, sm2, sm5, sm7, sm11, sm12, sm20, 
 
 ```
 
-
 #### Cumulative Hazard Calculation
 
-The cumulative hazard represents the total hazard accumulated for the individual over time and like the hazard rate, is another measure that can be used to estimate the risk for the individual at a point in time. The cumulative hazard for each individual is shown below. Higher values represent a higher chance of failure.
+The cumulative hazard represents the total hazard accumulated for the
+individual over time and like the hazard rate, is another measure that
+can be used to estimate the risk for the individual at a point in time.
+The cumulative hazard for each individual is shown below. Higher values
+represent a higher chance of failure.
 
 $H(t) = \int_0^t h(t) dt$ where, $H(t)$ is the cumulative hazard from
 time 0 to time $(t)$ $h(t)$ is the hazard rate at time $t$
@@ -933,7 +958,9 @@ kable(head(predictiondata))
 
 #### Survival probability
 
-While cumulative hazard can be used by itself to give an idea of an individual's risk, it can also be used to calculate a probability of survival. 
+While cumulative hazard can be used by itself to give an idea of an
+individual's risk, it can also be used to calculate a probability of
+survival.
 
 Probability Calculation: $S(t) = e^{-H(t)}$ $H(t)$ is the cumulative
 hazard up to time $t$.
@@ -943,7 +970,6 @@ predictiondata$SurvivalProbability <- predict(cox1.1, type = "survival", newdata
 kable(head(predictiondata))
 
 ```
-
 
 #### Predicting Time Until Failure
 

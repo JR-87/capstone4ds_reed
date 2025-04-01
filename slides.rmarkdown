@@ -17,6 +17,7 @@ editor:
     wrap: 72
 ---
 
+
 ::: callout-important
 **Remember:** Your goal is to make your audience understand and care
 about your findings. By crafting a compelling story, you can effectively
@@ -63,6 +64,7 @@ The PCA [@daffertshofer2004pca]\*
 
 A study was conducted to determine how...
 
+
 ```{r, warning=FALSE, echo=F, message=FALSE}
 # loading packages 
 library(tidyverse)
@@ -92,6 +94,7 @@ ggplot1 = murders %>% ggplot(mapping = aes(x=population/10^6, y=total))
 
 ```
 
+
 ## Modeling and Results
 
 -   Explain your data preprocessing and cleaning steps.
@@ -102,9 +105,11 @@ ggplot1 = murders %>% ggplot(mapping = aes(x=population/10^6, y=total))
 
 -   **Tell a story about what the data reveals.**
 
+
 ```{r}
 
 ```
+
 
 ## Conclusion
 
@@ -113,3 +118,4 @@ ggplot1 = murders %>% ggplot(mapping = aes(x=population/10^6, y=total))
 -   Discuss the implications of your results.
 
 ## References
+
