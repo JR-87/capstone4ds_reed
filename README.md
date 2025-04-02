@@ -1,21 +1,20 @@
-# Instructions
+# Cox Proportional Hazards Model
 
-Create a GitHub page for the project
 
-## GitHub:
-#### 1. Create a GitHub account and Sign in
-#### 2. Go to [https://github.com/capstone4ds/capstone4ds_template](https://github.com/capstone4ds/capstone4ds_template) and fork (create a copy to your GitHub)
-![fork](fork.png)
-#### 3. Change the name of the repo to *IDC6940_GroupName*
-#### 4. Go to *Settings* -> *Pages* -> under *Branch* -> select *main*
-#### 5. Wait for a few seconds and refresh the page. You see the link of the page. 
+## Authors
+#### Jayme Reed & Brad Paton
 
-## RStudio:
-#### 1. Go to RStudio
-#### 2. Create a Version Control Project and Clone the repo.
-#### 3. Commit and push to see changes on the website et Voilà!
+## Abstract
 
-More information:
-- [GitHub](https://happygitwithr.com/index.html)
-- [Video1 RStudio connection to GitHub](https://www.youtube.com/watch?v=MdmnE3AnkQE)
-- [Video2 RStudio connection to GitHub](https://www.youtube.com/watch?v=jN6tvgt3GK8)
+This paper investigates the application of the Cox proportional hazards model to model and predict the survival probabilities of aircraft engines. Given the complexity and critical nature of aircraft safety, accurate survival analysis of engine performance data is essential for effective maintenance scheduling and risk management. 
+
+In this paper, a dataset comprising operational metrics, sensor measurements, and number of iterations comprise a series of metrics used to build an effective model. The analysis demonstrates that the Cox model effectively captures the relationship between various covariates and their impact on survival probabilities. The model is validated using a second dataset to compare to the data used to train the model, showcasing its predictive accuracy and reliability. 
+
+The results highlight the potential impacts of multiple variables on survival probability that could be applied to enhancing predictive maintenance strategies to reduce the number of unexpected engine failures and improving aircraft safety. This research contributes to the field of aviation engineering by providing a statistical basis for decision-making in engine maintenance and operational practices.
+
+#### Links:
+
+- [Dataset Source](https://data.nasa.gov/Aerospace/CMAPSS-Jet-Engine-Simulated-Data/ff5v-kuh6/about_data)
+- [Link to the Paper's Website](https://jr-87.github.io/capstone4ds_reed/)
+
+![Survival Curve](SurvivalCurve.png)
