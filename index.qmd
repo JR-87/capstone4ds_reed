@@ -615,7 +615,7 @@ covariates <- c("os1", "os2", "os3", "sm1", "sm2", "sm3", "sm4", "sm5", "sm6", "
 univ_formulas <- sapply(covariates,
                         function(x) as.formula(paste('Surv(time, status)~', x)))
 
-univ_models <- lapply( univ_formulas, function(x){coxph(x, data = data_all)})
+univ_models <- lapply( univ_formulas, function(x){coxph(x, data = data_grouped)})
 
 # Extract data
 univ_results <- lapply(univ_models,
@@ -769,7 +769,7 @@ indicating the linearity assumption is true for the covariates in the
 model.
 
 ```{r}
-par(mfrow = c(3,3),
+par(mfrow = c(4,4),
       mar = c(2,2,4,1))
 
 martingale <- resid(cox1, type = "martingale")
@@ -981,14 +981,23 @@ data_grouped_reduced$HazardRate <- predict(cox1.1,
 
 #### Cumulative Hazard Calculation
 
-The cumulative hazard equation represents the total hazard accumulated
-for the individual over time and like the hazard rate, is another
-measure that can be used to estimate the risk for the individual at a
-point in time. The cumulative hazard for each individual is shown below.
-Higher values represent a higher chance of failure.
+The cumulative hazard represents the total hazard accumulated for the
+individual over time and like the hazard rate, is another measure that
+can be used to estimate the risk for the individual at a point in time.
+The cumulative hazard for each individual is shown below. Higher values
+represent a higher chance of failure.
+
+$H(t) = \int_0^t h(t) dt$ where, $H(t)$ is the cumulative hazard from
+time 0 to time $(t)$ $h(t)$ is the hazard rate at time $t$
+
+The cumulative hazard of individuals in the model are shown in the visual below. Higher cumulative hazard indicates a higher level of risk at time `t`.
 
 ```{r}
-kable(head(data_grouped_reduced))
+sf <- survfit(cox1.1)
+
+ggsurvplot(fit = sf,
+           data = data_grouped_reduced, risk.table = TRUE, fun = "cumhaz")$plot +
+  ggtitle('Cumulative Hazard Over Time')
 
 ```
 
@@ -1002,27 +1011,39 @@ Probability Calculation: $S(t) = e^{-H(t)}$ $H(t)$ is the cumulative
 hazard up to time $t$.
 
 ```{r}
-# predictiondata$SurvivalProbability <- predict(cox1.1, type = "survival", newdata = predictiondata)
-# kable(head(predictiondata))
+data_grouped_reduced$SurvivalProbability <- predict(cox1.1, type = "survival", newdata = data_grouped_reduced)
+kable(head(data_grouped_reduced))
 
 ```
 
-#### Predicting Time Until Failure
 
-Time until event can be modeled in R by passing the `type = "lp"`
-argument in the `stats::predict()` function to get a value for linear
-predictor.
+The resulting survival curve from the model is shown below. 
 
 ```{r}
 
+survtimes <- data.frame(Percent = c("100% Survival", "< 25% Survival,", "< 50% Survival", "< 75% Survival", "<90% Survival"),
+                        Time = c(sf$time[sf$lower < 1][1], 
+                                    sf$time[sf$lower < .75][1], 
+                                    sf$time[sf$lower < .5][1], 
+                                    sf$time[sf$lower < .25][1], 
+                                    sf$time[sf$lower < .1][1]))
 
+ggsurvplot(fit = sf, data = data_grouped_reduced)$plot +
+  ggtitle('Survival Probability Over Time')
 
 ```
 
 ## Conclusion
 
--   Summarize your key findings.
+The implications of an engine failure are severe, with a possible result including an aircraft crash with a loss of human life and millions of dollars. Based on these implications, there is no acceptable room for failure for aircraft engines. The model created a confidence interval for estimating probabilities at each value of time. The values for time used will be the value where the probability of survival at the lower end of the confidence interval to exercise caution.
 
--   Discuss the implications of your results.
+```{r}
+kable(survtimes)
+
+```
+
+The lower end of the confidence interval for survival probability is shown to hold stable at 100% until `t = 128` with a gradual decrease afterwards. Half of the engines are expected to survive until `t = 221` and 90% of the engines are expected to fail at `t = 316`. These times are reflected by the survival curve shown above. The cumulative hazard over time plot confirms the hazard over time increases. The plot shows a low hazard until `t = 128` with a gradual increase.
+
+Based on these findings, the model can be applied by recommending for NASA not to use engines after 128 iterations have passed. The engines should undergo routine maintenance beforehand and should be evaluated to ensure the probability of survival calculated by the model remains at 100%. All engines should be equipped with sensors for the covariates used and readings should be applied to the model after each use of the engine. The engine should be removed from service if the resulting survival probability is less than 100%.
 
 ## References
