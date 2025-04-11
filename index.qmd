@@ -1,5 +1,5 @@
 ---
-title: "Predicting Remaining Useful Life of NASA Aircraft Engines"
+title: "Predicting Survival Probability of NASA Aircraft Engines"
 subtitle: "Using Cox Proportional Hazards Model"
 author: "Jayme Reed & Brad Paton (Advisor: Dr. Cohen)"
 date: '`r Sys.Date()`'
@@ -468,23 +468,33 @@ indicate how accurate the CPH model is with the data [@Therneau2017].
 
 CPH can be used to predict the survival probability at a specific time
 $S(t|X=x)$, and the hazard ratio for an individual when compared to a
-reference individual $\frac{h(t|X=x)}{h(t|X=x_{ref}}$ [@nahhas2025]. If
-the resulting probability is greater than or equal to 50%, it is assumed
-the event has not occurred. If the resulting probability is less than
-50%, it is assumed the event has occurred. It is also possible to
+reference individual $\frac{h(t|X=x)}{h(t|X=x_{ref}}$ [@nahhas2025]. The
+equation is
+
+$$
+S(t) = e^{-H(t)}
+$$ {#eq-survprob}
+
+where, $H(t)$ is the cumulative hazard up to time $t$.
+
+If the resulting probability is greater than or equal to 50%, it is
+assumed the event has not occurred. If the resulting probability is less
+than 50%, it is assumed the event has occurred. It is also possible to
 generate a plot of the estimated survival curves for all values of $t$
-that are desired.
+that are desired. However, CPH is not able to predict the specific time
+the event is going to occur which is considered a limitation of the
+model.
 
 ## Analysis and Results
 
 ### Data Structure, Exploration, and Visualization
 
 Though CPH is typically used with health data, it does have applications
-in other fields. This paper will study the survivability of a NASA
-aircraft engine using data provided by NASA for the study on propagation
-modeling [@saxena2008]. In particular, this paper will be examining the
-data from the engine make two which has a training dataset and a testing
-dataset.
+in other fields. This paper will study the survival probability of a
+NASA aircraft engine using data provided by NASA for the study on
+propagation modeling [@saxena2008]. In particular, this paper will be
+examining the data from the engine design two which has a training
+dataset and a testing dataset.
 
 **Data Structure**
 
@@ -506,8 +516,8 @@ engines in that dataset will eventually fail. The testing dataset will
 only have the value of 0 as none of the machines have failed in that
 dataset.
 
-Below are tables showing the structure of the training and testing data
-after the transformations described above.
+The table below shows the structure for the combined training and
+testing data after the transformations described above.
 
 ```{r}
 testurl <- 'https://raw.githubusercontent.com/JR-87/capstone4ds_reed/refs/heads/main/test_FD002.txt'
@@ -531,14 +541,18 @@ kable(head(data_all, n = 5), format = "markdown", caption = 'NASA Aircraft Engin
 
 **Data Visualization**
 
-There are 260 engines in the training data. The histogram shows that the
-survival times of the engines are normally distributed and the box plot
-shows there six outliers in the dataset. The engines have a median
-survival time of 199 cycles with a standard deviation of 46.8. The
-maximum number of cycles an engine lasted was 378 while the minimum
-number of cycles an engine lasted was 128.
+There are 519 engines in the combined data with 260 engines in the
+training data and 259 engines in the testing data. The below metrics are
+generated using the training data as that data contains no censored
+data. The histogram shows that the survival times of the engines are
+normally distributed and the box plot shows there six outliers in the
+dataset. The engines have a median survival time of 199 cycles with a
+standard deviation of 46.78. The maximum number of cycles an engine
+lasted was 378 while the minimum number of cycles an engine lasted was
+128. Since the testing data contains all censored data, the basic
+metrics were not generated.
 
-```{r, echo = FALSE}
+```{r}
 train_grouped <- train %>% 
   group_by(id) %>%
   slice_max(time)
@@ -557,7 +571,7 @@ summarymetrics <- data.frame(c("Minimum", "Median", "Mean", "Standard Deviation"
 
 colnames(summarymetrics) <- c("Metric", "Value")
 summarymetrics$Value <- round(summarymetrics$Value, digits = 2)
-kable(summarymetrics, format = "markdown")
+kable(summarymetrics, format = "markdown", align = "c")
 
 ```
 
@@ -582,10 +596,10 @@ grid.arrange(Histogram,box,ncol = 2, top = "Distribution of Engine Longevity in 
 
 ```
 
-To determine the initial survival function, the Kaplan-Meier survival
-curve was generated and is shown below. The graph visualizes the
-survival curve and the information that was gathered through the
-histogram.
+To determine the initial survival function, using the training data, the
+Kaplan-Meier survival curve was generated and is shown below. The graph
+visualizes the survival curve and the information that was gathered
+through the histogram.
 
 ```{r}
 t <- as.matrix(train_grouped[, "time"])
@@ -598,14 +612,24 @@ autoplot(km_fit) + theme_bw()
 
 ### Creating Cox Proportional Hazards Model
 
-**Covariate Selection**
+**Generating Models**
+
+Generation of the CPH models will be done using R, specifically the R
+package `survival`. To generate the CPH model with properly formatted
+survival data, a survival object is created by running
+`Surv(time, event)` where `time` is the time field and `event` is the
+event field. To generate the actual model, the survival object is then
+applied to the function `coxph(survival object ~ x, data)` where `x`
+represents the covariate(s) and `data` is the survival data that is
+being modeled [@R-base].
 
 Based on the information provided by NASA on their data, there are
 various sensors and operational setting fields that do not impact the
-survival rate of an engine. To determine which covariates will impact
-the survival probability, the below univariate test was run. The
-covariates in which the p-value is $< 0.05$ will be considered for the
-CPH models while the other covariates will be excluded.
+survival rate of an engine. To determine which covariates are
+statistically significant, the below univariate test was run. The test
+uses the Wald test to determine which covariates will significantly
+impact the model individually. The covariates in which the p-value is
+$< 0.05$ will be considered statistically significant.
 
 ```{r}
 covariates <- c("os1", "os2", "os3", "sm1", "sm2", "sm3", "sm4", "sm5", "sm6", "sm7",
@@ -637,84 +661,85 @@ univ_results <- lapply(univ_models,
 kable(as.data.frame(univ_results))
 ```
 
-Based on the above test, the covariates that will be considered for the
-CPH models are os1, os3, sm1, sm5, sm6, sm7, sm11, sm12, sm13, sm14,
-sm19, sm20, and sm21 which is fourteen out of twenty-four possible
-covariates.
+Based on the above test, none of the covariates are statistically
+significant individually with all the data. As such, to determine the
+best model to use for this analysis, a forward and backward step-wise
+regression will be done to generate the models with the best Akaike
+Information Criterion (AIC) and Bayesian Information Criterion (BIC)
+values and compare the concordance values of those models with models
+that have covariates that were statistically significant when used in a
+CPH model with the training data. The model with the highest concordance
+value, and therefore, the most accurate will be used for the analysis.
 
-**Generating Models**
-
-Generation of all CPH models will be done using R, specifically the R
-package `survival`. To generate the CPH model with properly formatted
-survival data, a survival object is created by running
-`Surv(time, event)` where `time` is the time field and `event` is the
-event field. To generate the actual model, the survival object is then
-applied to the function `coxph(survival object ~ x, data)` where `x`
-represents one or multiple covariate(s) and `data` is the survival data
-that is being modeled.[@R-base].
-
-The table below provides the model number, the covariates used, and the
-concordance index. The concordance index generates a value to determine
-which model is the most accurate with the provided covariates. After
-determining the most accurate model, the CPH assumptions will be tested.
+The table below provides the model number, the covariates used, the AIC
+and BIC from the step-wise regression if applicable, and the concordance
+index. The concordance index generates a value to determine which model
+is the most accurate with the provided covariates. After determining the
+most accurate model, the CPH assumptions will be tested.
 
 ```{r}
 surv_object <- Surv(data_grouped$time, data_grouped$status)
 
-cox1 <- coxph(data = data_grouped, surv_object ~ os1 + os3 + sm1 + sm5 + sm6 + sm7 + sm11 + sm12 + sm13 + sm14 + sm19 + sm20 + sm21)
+all_cov <- coxph(data = data_grouped, surv_object ~ os1 + os2 + os3 + sm1 + sm2 + sm3 + sm4 + sm5 + sm6 + sm7 + sm8 + sm9 + sm10 + sm11 + sm12 + sm13 + sm14 + sm15 + sm16 + sm17 + sm18 + sm19 + sm20 + sm21)
 
-cox2 <- coxph(data = data_grouped, surv_object ~ os1 + os3 + sm1 + sm5)
+aic <- MASS::stepAIC(all_cov, trace = 0)
+n <- nrow(data_grouped)
+bic <- step(all_cov, direction = "both", k = log(n), trace = 0)
 
-cox3 <- coxph(data = data_grouped, surv_object ~ os1 + os3 + sm1 + sm5 + sm6 + sm7 + sm13 + sm14 + sm19 + sm21)
+train_sig <- lapply( univ_formulas, function(x){coxph(x, data = train_grouped)})
 
-cox4 <- coxph(data = data_grouped, surv_object ~ sm5 + sm6 + sm7 + sm11 + sm12 + sm13 + sm14 + sm19 + sm20 + sm21)
+cox1 <- coxph(data = data_grouped, surv_object ~ os1 + os2 + os3 + sm1 + sm2 + sm3 + sm4 + sm5 + sm6 + sm7 + sm8 + sm9 + sm10 + sm11 + sm12 + sm13 + sm14 + sm15 + sm16 + sm17 + sm18 + sm19 + sm20 + sm21)
 
-cox5 <- coxph(data = data_grouped, surv_object ~ os1 + os3 + sm1 + sm5  + sm7 + sm11 + sm12 + sm13 + sm19 + sm20 )
+cox2 <- coxph(data = data_grouped, surv_object ~ os3 + sm3 + sm4 + sm5 + sm8 + sm9 + sm15 + sm16 + sm17 + sm18 + sm20)
 
-cox6 <- coxph(data = data_grouped, surv_object ~ os1  + sm1 + sm5  + sm7 + sm11 + sm12 + sm13 + sm19  + sm21)
+cox3 <- coxph(data = data_grouped, surv_object ~ os3 + sm3 + sm4 + sm8 + sm9 + sm15 + sm18)
 
-cox7 <- coxph(data = data_grouped, surv_object ~ os1  + sm13 + sm14 + sm19 + sm20)
-
-cox8 <- coxph(data = data_grouped, surv_object ~ os1 + os3 + sm21)
-
-cox9 <- coxph(data = data_grouped, surv_object ~ os1 + os3 + sm5 + sm6 + sm12 + sm13  + sm19 + sm20 + sm21)
-
-cox10 <- coxph(data = data_grouped, surv_object ~  os3 + sm1 + sm5 + sm6  + sm11 + sm12 + sm13  + sm19 + sm20 + sm21)
+cox4 <- coxph(data = data_grouped, surv_object ~ os3 + sm13 + sm14 + sm19)
 
 
 ```
 
-```{r}
-concordance_results <- data.frame(c("Model 1", "Model 2", "Model 3", "Model 4", "Model 5", 
-                                    "Model 6", "Model 7", "Model 8", "Model 9", "Model 10"), 
-                   c("os1, os3, sm1, sm2, sm5, sm6, sm7, sm11, sm12, sm13, sm14, sm19, sm20, sm21", 
-                     "os1, os3, sm1, sm2, sm5", 
-                     "os1, os3, sm1, sm5, sm6, sm7, sm13, sm14, sm19, sm21", 
-                     "sm5, sm6, sm7, sm11, sm12, sm13, sm14, sm19, sm20, sm21", 
-                     "os1, os3, sm1, sm2, sm5, sm7, sm11, sm12, sm13, sm19, sm20", 
-                     "os1, sm1, sm2, sm5, sm7, sm11, sm12, sm13, sm19, sm21",
-                     "os1, sm13, sm14, sm19, sm20", 
-                     "os1, os3, sm21",
-                     "os1, os3, sm2, sm5, sm6, sm12, sm13, sm19, sm20, sm21",
-                     "os3, sm1, sm2, sm5, sm6, sm11, sm12, sm13, sm19, sm20, sm21"),
-                   c(cox1$concordance[6], cox2$concordance[6], cox3$concordance[6], cox4$concordance[6], cox5$concordance[6], cox6$concordance[6], cox7$concordance[6], cox8$concordance[6], cox9$concordance[6], cox10$concordance[6]))
+```{r, echo = FALSE}
+stepwise_results <- data.frame(c("model 1", "model 2", "model 3", "model 4"), 
+                               c("All covariates", "os3, sm3 - sm5, sm8 - sm9, sm15 - sm18, sm20", "os3, sm3 - sm4, sm8-sm9, sm15, sm18", "os3, sm13 - sm14, sm19"),
+                               c("2449.92", "2431.88", "N/A", "N/A"),
+                               c("2547.71", "N/A", "2461.31", "N/A"),
+                               c(cox1$concordance[6], cox2$concordance[6], cox3$concordance[6], cox4$concordance[6]))
 
-colnames(concordance_results) <- c("Model", "Covariates", "Concordance Index")
+colnames(stepwise_results) <- c("Model", "Covariates", "AIC", "BIC", "Concordance")
 
 
-kable(concordance_results, format = "markdown")
+kable(stepwise_results, format = "markdown")
 
 ```
 
-Model 1 had the highest concordance index and used all of the covariates
-that were determined to be significant to the survival of the engine.
-The proceeding analysis will be done using model 1. The below tables
-provide the summary values from the model.
+Based on the above model results, the model that has the highest
+concordance value is model 1 which has all of the covariates. However,
+before proceeding with that model, a test for linear dependency will be
+run to determine all covariates are linearly independent.
 
 ```{r}
-kable(tidy(cox1), format = "markdown")
-g <- glance(cox1)
+kable(alias(cox1), format = "markdown")
+```
+
+The above result indicates that sm19 needs to be removed from the model
+as it linearly dependent on another value. In addition, sm16 resulted in
+a possible infinite coefficient so that covariate has also been removed.
+The proceeding analysis will be done using model 1 without sm16 and
+sm19. The below tables provide the summary values from the model.
+
+```{r}
+cox1.1 <- coxph(data = data_grouped, surv_object ~ os1 + os2 + os3 + sm1 + sm2 + sm3 + sm4 + sm5 + sm6 + sm7 + sm8 + sm9 + sm10 + sm11 + sm12 + sm13 + sm14 + sm15 + sm17 + sm18 + sm20 + sm21)
+
+ci <- cox1.1$concordance[6]
+```
+
+```{r, echo = FALSE}
+kable(tidy(cox1.1), format = "markdown")
+
+g <- glance(cox1.1)
 g <- g %>% select(n, nevent, concordance, std.error.concordance, logLik, statistic.log, p.value.log, statistic.wald, p.value.wald, statistic.sc, p.value.sc)
+
 kable(g, format = "markdown")
 ```
 
@@ -722,8 +747,8 @@ The forest plot for model 1 is shown below. The covariates that are
 closest to the value of one have a hazard rate that has less effect on
 the calculated hazard ratio for the entire model.
 
-```{r}
-plot_model(cox1,
+```{r, echo = FALSE}
+plot_model(cox1.1,
            dot.size = 2,
            line.size = 1,
            colors = "red")+
@@ -764,15 +789,17 @@ a vector of residuals that can be plotted against the range of values
 for each covariate.
 
 The plots of the Martingale residuals vs the range of values for each
-covariate is shown below. For each covariate, there is no clear slop
+covariate is shown below. For each covariate, there is no clear slope
 indicating the linearity assumption is true for the covariates in the
 model.
 
 ```{r}
+martingale <- resid(cox1.1, type = "martingale")
+```
+
+```{r, echo = FALSE}
 par(mfrow = c(4,4),
       mar = c(2,2,4,1))
-
-martingale <- resid(cox1, type = "martingale")
 
 plot(data_grouped$os1, martingale, main = "Martingale Residuals: os1")
 abline(h = 0, col = "red")
@@ -780,10 +807,19 @@ abline(h = 0, col = "red")
 plot(data_grouped$os2, martingale, main = "Martingale Residuals: os2")
 abline(h = 0, col = "red")
 
+plot(data_grouped$os3, martingale, main = "Martingale Residuals: os3")
+abline(h = 0, col = "red")
+
 plot(data_grouped$sm1, martingale, main = "Martingale Residuals: sm1")
 abline(h = 0, col = "red")
 
 plot(data_grouped$sm2, martingale, main = "Martingale Residuals: sm2")
+abline(h = 0, col = "red")
+
+plot(data_grouped$sm3, martingale, main = "Martingale Residuals: sm3")
+abline(h = 0, col = "red")
+
+plot(data_grouped$sm4, martingale, main = "Martingale Residuals: sm4")
 abline(h = 0, col = "red")
 
 plot(data_grouped$sm5, martingale, main = "Martingale Residuals: sm5")
@@ -793,6 +829,15 @@ plot(data_grouped$sm6, martingale, main = "Martingale Residuals: sm6")
 abline(h = 0, col = "red")
 
 plot(data_grouped$sm7, martingale, main = "Martingale Residuals: sm7")
+abline(h = 0, col = "red")
+
+plot(data_grouped$sm8, martingale, main = "Martingale Residuals: sm8")
+abline(h = 0, col = "red")
+
+plot(data_grouped$sm9, martingale, main = "Martingale Residuals: sm9")
+abline(h = 0, col = "red")
+
+plot(data_grouped$sm10, martingale, main = "Martingale Residuals: sm10")
 abline(h = 0, col = "red")
 
 plot(data_grouped$sm11, martingale, main = "Martingale Residuals: sm11")
@@ -807,6 +852,15 @@ abline(h = 0, col = "red")
 plot(data_grouped$sm14, martingale, main = "Martingale Residuals: sm14")
 abline(h = 0, col = "red")
 
+plot(data_grouped$sm15, martingale, main = "Martingale Residuals: sm15")
+abline(h = 0, col = "red")
+
+plot(data_grouped$sm17, martingale, main = "Martingale Residuals: sm17")
+abline(h = 0, col = "red")
+
+plot(data_grouped$sm18, martingale, main = "Martingale Residuals: sm18")
+abline(h = 0, col = "red")
+
 plot(data_grouped$sm20, martingale, main = "Martingale Residuals: sm20")
 abline(h = 0, col = "red")
 
@@ -817,21 +871,22 @@ abline(h = 0, col = "red")
 **Proportional Hazards Assumption**
 
 The `cox.zph` function can be used to check the proportional hazards
-assumption. As mentioned above, the function calculates p values for
-each covariate. The global p-value will first be compared to
-$\alpha = 0.05$. If that p-value is $<\alpha$, then at least one
-covariate violates the PH assumption and the model will need to be
-adapted.
+assumption. As mentioned, the function calculates p values for each
+covariate. The global p-value will first be compared to $\alpha = 0.05$.
+If that p-value is $<\alpha$, then at least one covariate violates the
+PH assumption and the model will need to be adapted.
 
 The output below shows the p-values for the hypothesis test and
-Schoenfeld residuals. The global p-value is $< \alpha$ so at least one
-covariate violates the PH assumption. Examining each individual
-covariate through both p-values and the plot of the Schoenfeld residuals
-shows that the covariates os1, os3, sm1, sm5, sm13, and sm14 all violate
-the PH assumption.
+Schoenfeld residuals. The global p-value is $> \alpha$ so none of the
+covariates violates the PH assumption on a global level. Examining each
+individual covariate through both p-values and the plot of the
+Schoenfeld residuals does show that os1, os3, sm13, and sm14 violate the
+PH assumption. To ensure the model is as accurate as possible, the model
+will addapted without those covariates and the global p-values will be
+compared.
 
 ```{r}
-cph_ph <- cox.zph(cox1) %>%
+cph_ph <- cox.zph(cox1.1) %>%
   pluck("table") %>%
   as.data.frame() %>%
   tibble::rownames_to_column("variable") %>%
@@ -839,7 +894,7 @@ cph_ph <- cox.zph(cox1) %>%
 kable(cph_ph, format = "markdown")
 ```
 
-```{r}
+```{r, echo = FALSE}
 # Function to put ph_plots on one visual
 create_ph_plots <- function(coxmodel, row, col){
   # Function takes argument that is a cox model from coxph()
@@ -862,39 +917,39 @@ create_ph_plots <- function(coxmodel, row, col){
   par(mfrow = c(1,1)) # Reset plotting area
 }
 
-create_ph_plots(cox1, 3, 5)
+create_ph_plots(cox1.1, 3, 5)
 ```
 
 ### Adjusting the Model
 
 The results of the above assumptions demonstrated that several
-covariates violate the PH assumption. As such, the model will be
-recreated by removing the covariates that violate the PH assumption.
-After recreating the model, the PH assumption and the linearity
-assumption will be tested again.
+covariates violate the PH assumption on a local level. As such, the
+model will be recreated by removing the covariates that violate the PH
+assumption. After recreating the model, the PH assumption and the
+linearity assumption will be tested again with the new PH global p-value
+being compared to the original model's global p-value.
 
-The table below demonstrates the new model information which has seven
-covariates: sm2, sm5, sm7, sm11, sm12, sm20, and sm21.
+The table below demonstrates the new model information which has
+eighteen covariates: os2, sm1 - sm12, sm15, sm17, sm18, sm20, sm21.
 
 ```{r}
-cox1.1 <- coxph(data = data_grouped,Surv(time, status) ~ sm2 + sm5 + sm7 + sm11 + sm12 + sm20 + sm21)
+cox1.2 <- coxph(data = data_grouped, surv_object ~ os2 + sm1 + sm2 + sm3 + sm4 + sm5 + sm6 + sm7 + sm8 + sm9 + sm10 + sm11 + sm12 + sm15 + sm17 + sm18 + sm20 + sm21)
 
-kable(tidy(cox1.1), format = "markdown")
-g <- glance(cox1.1)
+kable(tidy(cox1.2), format = "markdown")
+g <- glance(cox1.2)
 g <- g %>% select(n, nevent, concordance, std.error.concordance, logLik, statistic.log, p.value.log, statistic.wald, p.value.wald, statistic.sc, p.value.sc)
 kable(g, format = "markdown")
 
 ```
 
 The output below shows the p-values for the new model's PH assumption
-hypothesis test and Schoenfeld residuals. The global p-value is
-$> \alpha$ so the PH assumption has been met for the model even though
-the covariate sm5 has an individual p-value of $< \alpha$. As such, this
-new model does not violate the PH assumption and the analysis can
-continue.
+hypothesis test and Schoenfeld residuals. The global p-value is now
+$< \alpha$ so the PH assumption has not been met for the new model. As
+such,, the remaining analysis will be done using the first model that
+had a global p-value $>\alpha$ which has all but two covariates.
 
-```{r}
-ph_2 <- cox.zph(cox1.1) %>%
+```{r, echo = FALSE}
+ph_2 <- cox.zph(cox1.2) %>%
   pluck("table") %>%
   as.data.frame() %>%
   tibble::rownames_to_column("variable") %>%
@@ -902,53 +957,25 @@ ph_2 <- cox.zph(cox1.1) %>%
 
 kable(ph_2, format = "markdown")
 
-create_ph_plots(cox1.1, 3, 5)
+create_ph_plots(cox1.2, 3, 5)
 
 ```
 
-Since a new model was generated, the below plots confirm that the
-linearity assumption is still met for this model.
+If the new model had passed the PH assumption, the linearity assumption
+would have been checked again.
 
-```{r}
+### Model Results
 
-par(mfrow = c(3,3),
-      mar = c(2,2,4,1))
+**Evaluation**
 
-martingale <- resid(cox1.1, type = "martingale")
+The CPH model that was selected has a concordance value of `{r} ci`
+which indicates that it is more than 50% accurate in predicting the
+survival of the machines. However, this model is not completely accurate
+so there is an expectation of some error in the model survival
+probabilities which will lead to caution in providing results in
+application settings.
 
-
-plot(data_grouped$sm2, martingale, main = "Martingale Residuals: sm2")
-abline(h = 0, col = "red")
-
-plot(data_grouped$sm5, martingale, main = "Martingale Residuals: sm5")
-abline(h = 0, col = "red")
-
-plot(data_grouped$sm7, martingale, main = "Martingale Residuals: sm7")
-abline(h = 0, col = "red")
-
-plot(data_grouped$sm11, martingale, main = "Martingale Residuals: sm11")
-abline(h = 0, col = "red")
-
-plot(data_grouped$sm12, martingale, main = "Martingale Residuals: sm12")
-abline(h = 0, col = "red")
-
-plot(data_grouped$sm20, martingale, main = "Martingale Residuals: sm20")
-abline(h = 0, col = "red")
-
-plot(data_grouped$sm21, martingale, main = "Martingale Residuals: sm21")
-abline(h = 0, col = "red")
-
-
-```
-
-### Model Applications and Predictions
-
-The model created can be used to calculate several relevant metrics when
-predicting remaining time for the engines until expected failure.
-Predictions will be made on the largest value for time for each
-individual engine.
-
-#### Model Coefficients
+**Calculations**
 
 The CPH model created produced coefficients for each covariate
 indicating the quantitative effect on the resulting hazard rate. The
@@ -959,40 +986,36 @@ coef <- data.frame(CoefficientValue = cox1.1$coefficients)
 kable(coef, format = "markdown")
 ```
 
-#### Hazard Rate Calculation
-
-The coefficients above can be used to calculate the hazard rate at time
-$t$. The hazard rate will be calculated for each engine at the engines
-max time value.
-
-The engines with the higher hazard rates are at a higher risk of
-experiencing failure.
+The coefficients above can be used to calculate the hazard rate
+[@eq-hazardrate], the cumulative hazard value[@eq-cumulativehr], and the
+survival probability [@eq-survprob]. The hazard rate at time $t$ will be
+calculated for each engine at the engines max time value. The cumulative
+hazard value is the total hazard accumulated for the subject over time
+and is used to estimate the risk for the subject at a point in time. The
+engines that have higher hazard rates or higher cumulative hazard values
+are at a greater risk of experiencing failure. The below table provides
+the hazard rate and suvivial probability for the first 10 engines in the
+dataset.
 
 ```{r}
-data_grouped_reduced <- data_grouped %>% select(id, time, sm2, sm5, sm7, sm11, sm12, sm20, sm21, status)
+data_grouped_reduced <- data_grouped %>% select(id, time, os1, os2, os3, sm1, sm2, sm3, sm4, sm5, sm6, sm7, sm8, sm9, sm10, sm11, sm12, sm13, sm14, sm15, sm17, sm18, sm20, sm21, status)
 
 
 data_grouped_reduced$HazardRate <- predict(cox1.1,
         newdata = data_grouped_reduced,
         type = "risk")
 
+data_grouped_reduced$SurvivalProbability <- predict(cox1.1, type = "survival", newdata = data_grouped_reduced)
 
+print_data <- data_grouped_reduced %>% select(id, time, status, HazardRate, SurvivalProbability)
+
+kable(head(print_data, n = 10), format = "markdown")
 ```
 
-#### Cumulative Hazard Calculation
+The below graphs demonstrate the cumulative hazard over time and the
+survival curve from the prediction model.
 
-The cumulative hazard represents the total hazard accumulated for the
-individual over time and like the hazard rate, is another measure that
-can be used to estimate the risk for the individual at a point in time.
-The cumulative hazard for each individual is shown below. Higher values
-represent a higher chance of failure.
-
-$H(t) = \int_0^t h(t) dt$ where, $H(t)$ is the cumulative hazard from
-time 0 to time $(t)$ $h(t)$ is the hazard rate at time $t$
-
-The cumulative hazard of individuals in the model are shown in the visual below. Higher cumulative hazard indicates a higher level of risk at time `t`.
-
-```{r}
+```{r, echo = FALSE}
 sf <- survfit(cox1.1)
 
 ggsurvplot(fit = sf,
@@ -1001,27 +1024,8 @@ ggsurvplot(fit = sf,
 
 ```
 
-#### Survival probability
-
-While cumulative hazard can be used by itself to give an idea of an
-individual's risk, it can also be used to calculate a probability of
-survival.
-
-Probability Calculation: $S(t) = e^{-H(t)}$ $H(t)$ is the cumulative
-hazard up to time $t$.
-
-```{r}
-data_grouped_reduced$SurvivalProbability <- predict(cox1.1, type = "survival", newdata = data_grouped_reduced)
-kable(head(data_grouped_reduced))
-
-```
-
-
-The resulting survival curve from the model is shown below. 
-
-```{r}
-
-survtimes <- data.frame(Percent = c("100% Survival", "< 25% Survival,", "< 50% Survival", "< 75% Survival", "<90% Survival"),
+```{r, echo = FALSE}
+survtimes <- data.frame(Percent = c("100% Survival", "75% Survival,", "50% Survival", "25% Survival", "10% Survival"),
                         Time = c(sf$time[sf$lower < 1][1], 
                                     sf$time[sf$lower < .75][1], 
                                     sf$time[sf$lower < .5][1], 
@@ -1035,15 +1039,35 @@ ggsurvplot(fit = sf, data = data_grouped_reduced)$plot +
 
 ## Conclusion
 
-The implications of an engine failure are severe, with a possible result including an aircraft crash with a loss of human life and millions of dollars. Based on these implications, there is no acceptable room for failure for aircraft engines. The model created a confidence interval for estimating probabilities at each value of time. The values for time used will be the value where the probability of survival at the lower end of the confidence interval to exercise caution.
+The implications of an engine failure are severe, as failure can lead to
+injury or death and the loss of millions of dollars. As such,
+understanding when an engine will fail allows for maintenance to occur
+before negative impacts occur. While CPH does not allow for the
+prediction of specific failure times, it does allow for the creation
+confidence intervals which can be used to gain an understanding of when
+engines are most likely to fail. The table below displays the percent of
+survival at the lower end of the confidence interval to exercise
+caution.
 
 ```{r}
-kable(survtimes)
+kable(survtimes, format = "markdown")
 
 ```
 
-The lower end of the confidence interval for survival probability is shown to hold stable at 100% until `t = 128` with a gradual decrease afterwards. Half of the engines are expected to survive until `t = 221` and 90% of the engines are expected to fail at `t = 316`. These times are reflected by the survival curve shown above. The cumulative hazard over time plot confirms the hazard over time increases. The plot shows a low hazard until `t = 128` with a gradual increase.
+The lower end of the confidence interval for survival probability is
+shown to hold stable at 100% until `t = 128` with a gradual decrease
+afterwards. Half of the engines are expected to survive until `t = 221`
+and 90% of the engines are expected to fail at `t = 316`. These results
+can be viewed in both the above survival graph and the cumulative hazard
+plot which shows a low hazard until `t = 128` with a gradual increase.
 
-Based on these findings, the model can be applied by recommending for NASA not to use engines after 128 iterations have passed. The engines should undergo routine maintenance beforehand and should be evaluated to ensure the probability of survival calculated by the model remains at 100%. All engines should be equipped with sensors for the covariates used and readings should be applied to the model after each use of the engine. The engine should be removed from service if the resulting survival probability is less than 100%.
+Based on these findings, the model can be applied by recommending for
+NASA not to use engines after 128 iterations have passed. The engines
+should undergo routine maintenance beforehand and should be evaluated to
+ensure the probability of survival calculated by the model remains at
+100%. All engines should be equipped with sensors for the covariates
+used and readings should be applied to the model after each use of the
+engine. The engine should be removed from service if the resulting
+survival probability is less than 100%.
 
 ## References
