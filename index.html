@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Jayme Reed &amp; Brad Paton (Advisor: Dr. Cohen)">
-<meta name="dcterms.date" content="2025-04-11">
+<meta name="dcterms.date" content="2025-04-12">
 
 <title>Predicting Survival Probability of NASA Aircraft Engines</title>
 <style>
@@ -3180,7 +3180,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">April 11, 2025</p>
+      <p class="date">April 12, 2025</p>
     </div>
   </div>
   
@@ -3247,7 +3247,7 @@ H(x) = \int_0^x h(u) du
 </section>
 <section id="covariate-selection" class="level3">
 <h3 class="anchored" data-anchor-id="covariate-selection">Covariate Selection</h3>
-<p>Depending on the study, there will be covariates that do not impact the probability of survival. Statistical methods such as the Wald Test can be used to determine which ones to use in the final CPH model. Generating a univariate CPH model for each covariate and using the Wald test with a significance level of <span class="math inline">\(\alpha = 0.05\)</span> will allow for determination of if a covariate is significant. Any covariates that are determined to be not significant to the survival probability can be removed from the final CPH model.</p>
+<p>Depending on the study, there will be covariates that do not impact the probability of survival. Statistical methods such as the Wald Test can be used to determine which ones are statistically significant individually and may have an impact in a multivariate model. Generating a univariate CPH model for each covariate and using the Wald test with a significance level of <span class="math inline">\(\alpha = 0.05\)</span> will allow for determination of if a covariate is significant. Additional tests for models will involve using a step-wise regression and comparing the results based on the assumptions that are met and the concordance index. Any covariates that are determined to be not significant to the survival probability can be removed from the final CPH model.</p>
 </section>
 <section id="assumptions" class="level3">
 <h3 class="anchored" data-anchor-id="assumptions">Assumptions</h3>

@@ -2,7 +2,8 @@
 title: "Predicting Survival Probability of NASA Aircraft Engines"
 subtitle: "Using Cox Proportional Hazards Model"
 author: "Jayme Reed & Brad Paton (Advisor: Dr. Cohen)"
-date: '`r Sys.Date()`'
+date: last-modified
+date-format: long
 format:
   html:
     theme: spacelab
@@ -216,11 +217,14 @@ purposes.
 
 Depending on the study, there will be covariates that do not impact the
 probability of survival. Statistical methods such as the Wald Test can
-be used to determine which ones to use in the final CPH model.
-Generating a univariate CPH model for each covariate and using the Wald
-test with a significance level of $\alpha = 0.05$ will allow for
-determination of if a covariate is significant. Any covariates that are
-determined to be not significant to the survival probability can be
+be used to determine which ones are statistically significant
+individually and may have an impact in a multivariate model. Generating
+a univariate CPH model for each covariate and using the Wald test with a
+significance level of $\alpha = 0.05$ will allow for determination of if
+a covariate is significant. Additional tests for models will involve
+using a step-wise regression and comparing the results based on the
+assumptions that are met and the concordance index. Any covariates that
+are determined to be not significant to the survival probability can be
 removed from the final CPH model.
 
 ### Assumptions

@@ -1,11 +1,13 @@
 ---
-title: "Predicting Survivability of NASA Aircraft Engines"
+title: "Predicting Survival Probability of NASA Aircraft Engines"
 subtitle: "Using Cox Proportional Hazards Model"
 author: "Jayme Reed & Brad Paton (Advisor: Dr. Cohen)"
-date: '`r Sys.Date()`'
+date: last-modified
+date-format: long
 format:
   revealjs:
     theme: moon
+    smaller: true
 course: Capstone Projects in Data Science
 bibliography: references.bib # file contains bibtex for references
 #always_allow_html: true # this allows to get PDF with HTML features
@@ -13,22 +15,203 @@ self-contained: true
 execute: 
   warning: false
   message: false
+  echo: false
 editor: 
   markdown: 
     wrap: 72
 ---
 
-## Methods
+```{r, echo = FALSE, warning=FALSE, include=FALSE}
+#Load packages
+library(tidyverse)
+library(gridExtra)
+library(grid)
+library(survival)
+library(survminer)
+library(ggpubr)
+library(magrittr)
+library(ggfortify)
+library(knitr)
+library(sjPlot)
+library(broom)
+```
 
--   Detail the models or algorithms used.
+```{r, echo = FALSE}
+#generation of the model for sample plots
+example_surv_object <- Surv(time = lung$time, event = lung$status)
 
--   Justify your choices based on the problem and data.
+example_coxmodel <- coxph(example_surv_object ~ meal.cal, data = lung)
+```
 
-## Data Exploration and Visualization
+## Cox Proportional Hazards (CPH) Model
 
-## Data Exploration and Visualization {.smaller}
+What is it?
 
-## Modeling and Results
+-   A statistical regression method specializing in modeling
+    time-to-event predictions with survival data [@Abeysekera2009]
+    -   Survival data has a value for time and an indicator column for
+        an event
+-   Is a method that can deal with censored data
+    -   Censored data is when the information about an individual in a
+        study is only known for a certain period of time [@klein2005]
+-   Primarily used in the health field but has applications in
+    predicting bank failure, the survival probability of machines, and
+    insurance likelihood payouts
+
+## Limitations
+
+-   The model assumes that as time goes on, the survival probability
+    will approach zero with no survivors [@asghar2024]
+
+-   The proportional hazards assumption can limit the ability to
+    correctly predict the effect of a variable [@jiang2024]
+
+-   The covariate selection can become biased and may not accurately
+    represent the true data [@wang2025],[@zhang2025]
+
+-   The model cannot provide a specific value for when the event will
+    happen, only the probability of when the event might happen
+
+## Mathematical Formulas
+
+-   Survival Function:
+
+    $S(x) = \int_{x}^{\infty} f(x)dx$
+
+-   Hazard Function:
+
+    $h(x) = \lim\limits_{\Delta x \rightarrow 0} \frac{P[x \leq X < x + \Delta x|X \geq x]}{\Delta x}$
+
+-   CPH Model Hazard Function:
+
+    $h(t|\mathbf Z) = h_0(t)\text{exp}(\sum\limits_{k=1}^{p} \beta_kZ_k)$
+
+-   Proportional Hazards Ratio:
+
+    $\frac{h(t|\mathbf Z)}{h(t|\mathbf Z*)} = \text{exp}[\sum\limits_{k=1}^{p} \beta_k(Z_k - Z_k^*)]$
+
+-   Cumulative Hazard Function:
+
+    $H(x) = \int_0^x h(u) du$
+
+## Assumptions
+
+There are four assumptions for CPH:
+
+::: incremental
+-   Independence assumption
+
+    -   Assumes that the survival times of observed subjects are
+        independent of each other [@nahhas2025]
+
+-   Non-informative Censoring Assumption
+
+    -   Assumes that censoring is non-informative [@nahhas2025]
+:::
+
+## Assumptions, Cont.
+
+-   Linearity Assumption
+
+    ::: incremental
+    -   Assumes the relationship between covariates and the outcome is a
+        linear relationship
+
+    -   This is tested using the Martingale residuals for each covariate
+        with the equation Martingale Residuals = Observed Events -
+        Expected Results [@nahhas2025]
+
+        -   The residuals are examined visually
+
+        -   If linear and appear to have a slop of zero, the assumption
+            is not violated [@Amini2015]
+    :::
+
+```{r,echo=FALSE}
+example_martingale <- resid(example_coxmodel, type = "martingale")
+
+plot(example_martingale, 
+     main = "Martingale Residuals: Example Covariate",
+     ylab = "Martingale Residuals for Example Covariate",
+     xlab = "Value Range for Example Covariate")
+abline(h = 0, col = "red")
+
+```
+
+## Assumptions, Cont.
+
+-   Proportional Hazards Assumption
+
+    ::: incremental
+    -   The ratio of hazard rates for any two subjects must be constant
+        at all times [@Bustan2018]
+
+    -   To test this assumption, the below hypothesis test is used:
+
+        $$
+        \begin{align*}
+        H_0&:\; \text{the log hazard ratio for each covariate remains constant over time} \\
+        H_1&: \; \text{the log hazard ratio for each covariate does not remain constant over time}
+        \end{align*}
+        $$
+
+        -   For this test, the goal is to *not* reject $H_0$
+
+    -   The scale Schoenfeld partial residuals are used to find the
+        p-value for this test
+
+        -   The Schoenfeld residuals are the difference between the
+            value of the covariate and the expected value of the
+            covariate at the time of failure [@klein2005]
+
+        -   There will be multiple p-values generated: global and
+            individual
+
+            -   If the global p-value is $< 0.05$, then the model has at
+                least one covariate that violates the proportional
+                hazards assumption and the individual p-values must be
+                examined
+
+            -   If the global p-value is $> 0.05$, then all covariates
+                meet the proportional hazard assumption [@nahhas2025]
+
+    Example of Schoenfeld plot and results
+
+    ```{r, echo = FALSE}
+    example_phtest <- cox.zph(example_coxmodel)
+
+    plot(example_phtest[1],
+         ylab = "Covariate Schoenfeld Residual",
+         xlab = "Time")
+
+    multi <- coxph(example_surv_object ~ meal.cal + age, data = lung)
+    ph_tibble <- cox.zph(multi) %>%
+      pluck("table") %>%
+      as.data.frame() %>%
+      tibble::rownames_to_column("variable") %>%
+      as_tibble()
+    kable(ph_tibble, format = "markdown")
+
+    ```
+    :::
+
+## Model Visualization - Kaplan Meier
+
+## Model Visualization - Forest Plot
+
+## Evaluation 
+
+## Prediction
+
+## Data Structure, Exploration, and Visualization
+
+## Creating CPH Model
+
+## Checking Assumptions
+
+## Adjusting the Model
+
+## Model Results
 
 ## Conclusion
 
