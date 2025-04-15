@@ -1060,8 +1060,8 @@ kable(survtimes, format = "markdown")
 
 The lower end of the confidence interval for survival probability is
 shown to hold stable at 100% until `t = 128` with a gradual decrease
-afterwards. Half of the engines are expected to survive until `t = 221`
-and 90% of the engines are expected to fail at `t = 316`. These results
+afterwards. Half of the engines are expected to survive until `t = 245`
+and 90% of the engines are expected to fail at `t = 347`. These results
 can be viewed in both the above survival graph and the cumulative hazard
 plot which shows a low hazard until `t = 128` with a gradual increase.
 
