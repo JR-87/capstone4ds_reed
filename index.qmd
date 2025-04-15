@@ -50,8 +50,8 @@ Those predictions would assist medical practitioners in triage and allow
 researchers the ability to generate predictions on the individuals who
 are at the greatest risk of losing their lives due to an illness. While
 the medical world is the most obvious use of survival predictions, the
-same methods can be applied to predicting bank failure, the remaining
-useful life of machines, machinery maintenance timelines, and insurance
+same methods can be applied to predicting bank failure, the survival
+probablity of machines, machinery maintenance timelines, and insurance
 likelihood of payouts. There are various survival methods that can be
 examined, including Cox proportional hazards model which will be
 examined in this paper.
@@ -416,8 +416,8 @@ the model on the hazard ratio. The resulting plot contains each
 covariate on the y axis, with the estimated effect on the hazard ratio
 on the the x axis. The plot contains whiskers demonstrating a 95%
 confidence interval for the effect. A positive effect indicates a
-positive correlation with the hazard with a higher number signifying a
-more severe effect on the hazard ratio.
+positive correlation with the hazard ratio and the higher the number the
+more severe the effect is on the hazard ratio.
 
 An example forest plot is shown below plotting the hazard ratio for each
 covariate in the model. The point represents the calculated hazard ratio

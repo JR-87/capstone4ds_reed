@@ -21,7 +21,7 @@ editor:
     wrap: 72
 ---
 
-```{r, echo = FALSE, warning=FALSE, include=FALSE}
+```{r, warning=FALSE, include=FALSE}
 #Load packages
 library(tidyverse)
 library(gridExtra)
@@ -47,19 +47,26 @@ example_coxmodel <- coxph(example_surv_object ~ meal.cal, data = lung)
 
 What is it?
 
+::: incremental
 -   A statistical regression method specializing in modeling
     time-to-event predictions with survival data [@Abeysekera2009]
+
     -   Survival data has a value for time and an indicator column for
         an event
+
 -   Is a method that can deal with censored data
+
     -   Censored data is when the information about an individual in a
         study is only known for a certain period of time [@klein2005]
+
 -   Primarily used in the health field but has applications in
     predicting bank failure, the survival probability of machines, and
     insurance likelihood payouts
+:::
 
 ## Limitations
 
+::: incremental
 -   The model assumes that as time goes on, the survival probability
     will approach zero with no survivors [@asghar2024]
 
@@ -71,28 +78,27 @@ What is it?
 
 -   The model cannot provide a specific value for when the event will
     happen, only the probability of when the event might happen
+:::
 
 ## Mathematical Formulas
 
--   Survival Function:
-
-    $S(x) = \int_{x}^{\infty} f(x)dx$
+-   Survival Function: $S(x) = \int_{x}^{\infty} f(x)dx$
 
 -   Hazard Function:
-
     $h(x) = \lim\limits_{\Delta x \rightarrow 0} \frac{P[x \leq X < x + \Delta x|X \geq x]}{\Delta x}$
 
 -   CPH Model Hazard Function:
-
     $h(t|\mathbf Z) = h_0(t)\text{exp}(\sum\limits_{k=1}^{p} \beta_kZ_k)$
 
 -   Proportional Hazards Ratio:
-
     $\frac{h(t|\mathbf Z)}{h(t|\mathbf Z*)} = \text{exp}[\sum\limits_{k=1}^{p} \beta_k(Z_k - Z_k^*)]$
 
--   Cumulative Hazard Function:
+-   Cumulative Hazard Function: $H(x) = \int_0^x h(u) du$
 
-    $H(x) = \int_0^x h(u) du$
+-   Concordance Index: $C = \frac{c + \frac{t_x}{2}}{c + d + t_x}$
+
+-   Survival Probability: $S(t) = e^{-H(t)}$, where $H(t)$ is the above
+    cumulative hazard function
 
 ## Assumptions
 
@@ -107,27 +113,29 @@ There are four assumptions for CPH:
 -   Non-informative Censoring Assumption
 
     -   Assumes that censoring is non-informative [@nahhas2025]
-:::
-
-## Assumptions, Cont.
 
 -   Linearity Assumption
 
-    ::: incremental
     -   Assumes the relationship between covariates and the outcome is a
-        linear relationship
+        linear relationship [@nahhas2025]
 
-    -   This is tested using the Martingale residuals for each covariate
-        with the equation Martingale Residuals = Observed Events -
-        Expected Results [@nahhas2025]
+-   Proportional Hazards Assumption
 
-        -   The residuals are examined visually
+    -   Assumes the ratio of hazards rates for any two subjects are
+        constant at all times [@Bustan2018]
+:::
 
-        -   If linear and appear to have a slop of zero, the assumption
-            is not violated [@Amini2015]
-    :::
+## Linearity Assumption
 
-```{r,echo=FALSE}
+-   Tested using the Martingale residuals for each covariate using the
+    equation Martingale Residuals = Observed Events - Expected Results
+    [@nahhas2025]
+
+-   If the plots are linear and appear to have a slope of zero, the
+    assumption is not violated [@Amini2015]
+
+```{r}
+#| fig-align: center
 example_martingale <- resid(example_coxmodel, type = "martingale")
 
 plot(example_martingale, 
@@ -138,68 +146,84 @@ abline(h = 0, col = "red")
 
 ```
 
-## Assumptions, Cont.
+## Proportional Hazards Assumption
 
--   Proportional Hazards Assumption
+-   The test is verified using the Schoenfeld partial residuals which
+    are the difference between the value of the covariate and the
+    expected value of the covariate at the time of failure [@klein2005]
 
-    ::: incremental
-    -   The ratio of hazard rates for any two subjects must be constant
-        at all times [@Bustan2018]
+::: panel-tabset
+#### Graph
 
-    -   To test this assumption, the below hypothesis test is used:
+```{r}
+example_phtest <- cox.zph(example_coxmodel)
 
-        $$
-        \begin{align*}
-        H_0&:\; \text{the log hazard ratio for each covariate remains constant over time} \\
-        H_1&: \; \text{the log hazard ratio for each covariate does not remain constant over time}
-        \end{align*}
-        $$
+plot(example_phtest[1],
+     ylab = "Covariate Schoenfeld Residual",
+     xlab = "Time")
+```
 
-        -   For this test, the goal is to *not* reject $H_0$
+#### Table
 
-    -   The scale Schoenfeld partial residuals are used to find the
-        p-value for this test
+```{r}
+multi <- coxph(example_surv_object ~ meal.cal + age, data = lung)
+ph_tibble <- cox.zph(multi) %>%
+  pluck("table") %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("variable") %>%
+  as_tibble()
+kable(ph_tibble, format = "markdown")
+```
+:::
 
-        -   The Schoenfeld residuals are the difference between the
-            value of the covariate and the expected value of the
-            covariate at the time of failure [@klein2005]
+## Kaplan-Meier Survival Curve
 
-        -   There will be multiple p-values generated: global and
-            individual
+::: incremental
+-   Provides visualization for the Kaplan-Meier estimator
 
-            -   If the global p-value is $< 0.05$, then the model has at
-                least one covariate that violates the proportional
-                hazards assumption and the individual p-values must be
-                examined
+-   Is considered to be well defined up until the largest observed study
+    time $t_{max}$
 
-            -   If the global p-value is $> 0.05$, then all covariates
-                meet the proportional hazard assumption [@nahhas2025]
+-   Demonstrates the time where the event being modeled is expected to
+    occur
+:::
 
-    Example of Schoenfeld plot and results
+```{r}
+#| fig-align: center
+example_curve <- survfit(example_coxmodel)
 
-    ```{r, echo = FALSE}
-    example_phtest <- cox.zph(example_coxmodel)
+ggsurvplot(example_curve,
+           data = lung,
+           title = "Example Survival Curve",
+           xlab = "Time",
+           ylab = "Survival Probability",
+           legend = "none")
+```
 
-    plot(example_phtest[1],
-         ylab = "Covariate Schoenfeld Residual",
-         xlab = "Time")
+## Forest Plot
 
-    multi <- coxph(example_surv_object ~ meal.cal + age, data = lung)
-    ph_tibble <- cox.zph(multi) %>%
-      pluck("table") %>%
-      as.data.frame() %>%
-      tibble::rownames_to_column("variable") %>%
-      as_tibble()
-    kable(ph_tibble, format = "markdown")
+-   Provides visualization of the effects of each covariate on the
+    hazard ratio
 
-    ```
-    :::
+-   A positive effect indicates a positive correlation with the hazard
+    ratio
 
-## Model Visualization - Kaplan Meier
+```{r, warning=FALSE}
+#| fig-align: center
+forest <- coxph(example_surv_object ~ age + sex, data = lung)
 
-## Model Visualization - Forest Plot
+plot_model(forest,
+           dot.size = 1,
+           line.size = 1,
+           colors = "red")+
+  theme_bw()+
+  labs(title = "Estimated Effects of Covariates on Hazard Ratios")+
+  ylab(label = "Covariates")+
+  xlab(label = "Estimated Effect on Hazard Ratio")
 
-## Evaluation 
+```
+
+## Evaluation
 
 ## Prediction
 
