@@ -36,13 +36,6 @@ library(sjPlot)
 library(broom)
 ```
 
-```{r, echo = FALSE}
-#generation of the model for sample plots
-example_surv_object <- Surv(time = lung$time, event = lung$status)
-
-example_coxmodel <- coxph(example_surv_object ~ meal.cal, data = lung)
-```
-
 ## Cox Proportional Hazards (CPH) Model
 
 What is it?
@@ -125,115 +118,211 @@ There are four assumptions for CPH:
         constant at all times [@Bustan2018]
 :::
 
-## Linearity Assumption
+## Visualization
 
--   Tested using the Martingale residuals for each covariate using the
-    equation Martingale Residuals = Observed Events - Expected Results
-    [@nahhas2025]
-
--   If the plots are linear and appear to have a slope of zero, the
-    assumption is not violated [@Amini2015]
-
-```{r}
-#| fig-align: center
-example_martingale <- resid(example_coxmodel, type = "martingale")
-
-plot(example_martingale, 
-     main = "Martingale Residuals: Example Covariate",
-     ylab = "Martingale Residuals for Example Covariate",
-     xlab = "Value Range for Example Covariate")
-abline(h = 0, col = "red")
-
-```
-
-## Proportional Hazards Assumption
-
--   The test is verified using the Schoenfeld partial residuals which
-    are the difference between the value of the covariate and the
-    expected value of the covariate at the time of failure [@klein2005]
-
-::: panel-tabset
-#### Graph
-
-```{r}
-example_phtest <- cox.zph(example_coxmodel)
-
-plot(example_phtest[1],
-     ylab = "Covariate Schoenfeld Residual",
-     xlab = "Time")
-```
-
-#### Table
-
-```{r}
-multi <- coxph(example_surv_object ~ meal.cal + age, data = lung)
-ph_tibble <- cox.zph(multi) %>%
-  pluck("table") %>%
-  as.data.frame() %>%
-  tibble::rownames_to_column("variable") %>%
-  as_tibble()
-kable(ph_tibble, format = "markdown")
-```
-:::
-
-## Kaplan-Meier Survival Curve
+The two common model visualizations are:
 
 ::: incremental
--   Provides visualization for the Kaplan-Meier estimator
+-   Kaplan-Meier Survival Curve
 
--   Is considered to be well defined up until the largest observed study
-    time $t_{max}$
+    -   Demonstrates the time where the event being modeled is expected
+        to occur [@klein2005]
 
--   Demonstrates the time where the event being modeled is expected to
-    occur
+-   Forest Plots
+
+    -   Visualizes the effects of each covariate in the model on the
+        hazard ratio
 :::
+
+## Evaluation and Survival Probability
+
+::: incremental
+-   Model accuracy evaluation is done using the concordance index
+
+    ::: incremental
+    -   The concordance index measures the amount of agreement between
+        two variables
+
+    -   A value of 1 means all the pairs are correctly ordered while a
+        value of 0 means no pairs are correctly ordered
+    :::
+
+-   Survival probability can be predicted at a specific time $t$
+
+    ::: incremental
+    -   If the probability is $\geq 50$%, it is assumed the event has
+        not occurred
+
+    -   If the probability is $< 50$%, it is assumed the event has
+        occurred
+    :::
+:::
+
+## Data Structure
+
+The data selected for this project comes from a study on propagation
+modeling that NASA completed, specifically focusing on the engine two
+testing and training datasets [@saxena2008].
+
+-   Each engine in the NASA data has an unknown amount of wear,
+    manufacturing variation, and sensor noise
+
+-   There are three operation setting fields and twenty-one sensor
+    measurement fields
+
+-   A column indicating status was added to both the testing and
+    training datasets with 0 indicating the machine has not failed and 1
+    indicating the machine has failed
+
+-   The data was then merged together to make one grouped dataset
+
+```{r}
+testurl <- 'https://raw.githubusercontent.com/JR-87/capstone4ds_reed/refs/heads/main/test_FD002.txt'
+
+test <- read.delim(testurl, header = TRUE, sep = '') %>%
+  mutate(status = 0,
+         id = id + 260)
+
+trainurl <- 'https://raw.githubusercontent.com/JR-87/capstone4ds_reed/refs/heads/main/train_FD002.txt'
+
+train <- read.delim(trainurl, header = TRUE, sep = '') %>%
+  group_by(id) %>%
+  mutate(status = if_else(row_number() == n(), 1, 0)) %>%
+  ungroup() 
+
+data_all <- rbind(train, test) 
+
+train_grouped <- train %>% 
+  group_by(id) %>%
+  slice_max(time)
+
+data_grouped <- data_all %>%
+  group_by(id) %>%
+  slice_max(time) 
+
+temp <- data_grouped %>% select(id, time, status, os1, os2, os3, sm1, sm2, sm3)
+
+kable(head(temp, n = 5), format = "markdown", caption = 'NASA Aircraft Engine Data')
+```
+
+## Exploration
+
+-   519 engines in the combined data
+
+    -   260 engines in training data
+
+    -   259 engines in testing data
+
+```{r}
+summarymetrics <- data.frame(c("Minimum", "Median", "Mean", "Standard Deviation", "Maximum"),
+                             c(min(train_grouped$time), 
+                               median(train_grouped$time),
+                               mean(train_grouped$time),
+                               sd(train_grouped$time),
+                               max(train_grouped$time)))
+
+colnames(summarymetrics) <- c("Metric", "Value")
+summarymetrics$Value <- round(summarymetrics$Value, digits = 2)
+kable(summarymetrics, format = "markdown", align = "c", caption = "Summary Metrics")
+```
+
+## Visualization
+
+::: panel-tabset
+#### Histogram/Boxplot
 
 ```{r}
 #| fig-align: center
-example_curve <- survfit(example_coxmodel)
+Histogram <- ggplot(data = train_grouped,
+       aes(x = time)) +
+  geom_histogram(binwidth = 5,
+                 fill = "grey")+
+  labs(x = "Survival Time (Iterations)",
+       y = "Frequency")+
+  theme_bw()
 
-ggsurvplot(example_curve,
-           data = lung,
-           title = "Example Survival Curve",
-           xlab = "Time",
-           ylab = "Survival Probability",
-           legend = "none")
+box <- ggplot(data = train_grouped,
+                  aes(y = time))+
+  geom_boxplot(fill = "gray",
+               color = "black")+
+  ylab("Time (Iterations)")+
+  theme_bw()
+
+
+grid.arrange(Histogram,box,ncol = 2, top = "Distribution of Engine Longevity in Training Data")
 ```
 
-## Forest Plot
+#### Survival Curve
 
--   Provides visualization of the effects of each covariate on the
-    hazard ratio
-
--   A positive effect indicates a positive correlation with the hazard
-    ratio
-
-```{r, warning=FALSE}
+```{r}
 #| fig-align: center
-forest <- coxph(example_surv_object ~ age + sex, data = lung)
+t <- as.matrix(train_grouped[, "time"])
+s <- as.matrix(train_grouped[, "status"])
 
-plot_model(forest,
-           dot.size = 1,
+km_fit <- survfit(Surv(t, s) ~ 1)
+
+autoplot(km_fit) + theme_bw()
+```
+:::
+
+## Creating CPH Model
+
+The table provides the model number, the covariates used, the AIC and
+BIC from the stepwise regression if applicable, and the concordance
+index.
+
+```{r}
+surv_object <- Surv(data_grouped$time, data_grouped$status)
+
+all_cov <- coxph(data = data_grouped, surv_object ~ os1 + os2 + os3 + sm1 + sm2 + sm3 + sm4 + sm5 + sm6 + sm7 + sm8 + sm9 + sm10 + sm11 + sm12 + sm13 + sm14 + sm15 + sm16 + sm17 + sm18 + sm19 + sm20 + sm21)
+
+aic <- MASS::stepAIC(all_cov, trace = 0)
+n <- nrow(data_grouped)
+bic <- step(all_cov, direction = "both", k = log(n), trace = 0)
+
+
+cox1 <- coxph(data = data_grouped, surv_object ~ os1 + os2 + os3 + sm1 + sm2 + sm3 + sm4 + sm5 + sm6 + sm7 + sm8 + sm9 + sm10 + sm11 + sm12 + sm13 + sm14 + sm15 + sm16 + sm17 + sm18 + sm19 + sm20 + sm21)
+
+cox2 <- coxph(data = data_grouped, surv_object ~ os3 + sm3 + sm4 + sm5 + sm8 + sm9 + sm15 + sm16 + sm17 + sm18 + sm20)
+
+cox3 <- coxph(data = data_grouped, surv_object ~ os3 + sm3 + sm4 + sm8 + sm9 + sm15 + sm18)
+
+cox4 <- coxph(data = data_grouped, surv_object ~ os3 + sm13 + sm14 + sm19)
+
+stepwise_results <- data.frame(c("model 1", "model 2", "model 3", "model 4"), 
+                               c("All covariates", "os3, sm3 - sm5, sm8 - sm9, sm15 - sm18, sm20", "os3, sm3 - sm4, sm8-sm9, sm15, sm18", "os3, sm13 - sm14, sm19"),
+                               c("2449.92", "2431.88", "N/A", "N/A"),
+                               c("2547.71", "N/A", "2461.31", "N/A"),
+                               c(cox1$concordance[6], cox2$concordance[6], cox3$concordance[6], cox4$concordance[6]))
+
+colnames(stepwise_results) <- c("Model", "Covariates", "AIC", "BIC", "Concordance")
+
+
+kable(stepwise_results, format = "markdown")
+```
+
+Model for the continuing analysis will have all covariates except sm16
+and sm19.
+
+## CPH Model Forest Plot
+
+```{r}
+#| fig-align: center
+cox1.1 <- coxph(data = data_grouped, surv_object ~ os1 + os2 + os3 + sm1 + sm2 + sm3 + sm4 + sm5 + sm6 + sm7 + sm8 + sm9 + sm10 + sm11 + sm12 + sm13 + sm14 + sm15 + sm17 + sm18 + sm20 + sm21)
+
+ci <- cox1.1$concordance[6]
+
+plot_model(cox1.1,
+           dot.size = 2,
            line.size = 1,
            colors = "red")+
   theme_bw()+
   labs(title = "Estimated Effects of Covariates on Hazard Ratios")+
   ylab(label = "Covariates")+
   xlab(label = "Estimated Effect on Hazard Ratio")
-
 ```
 
-## Evaluation
-
-## Prediction
-
-## Data Structure, Exploration, and Visualization
-
-## Creating CPH Model
-
 ## Checking Assumptions
-
-## Adjusting the Model
 
 ## Model Results
 

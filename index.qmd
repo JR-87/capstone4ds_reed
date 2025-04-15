@@ -222,7 +222,7 @@ individually and may have an impact in a multivariate model. Generating
 a univariate CPH model for each covariate and using the Wald test with a
 significance level of $\alpha = 0.05$ will allow for determination of if
 a covariate is significant. Additional tests for models will involve
-using a step-wise regression and comparing the results based on the
+using a stepwise regression and comparing the results based on the
 assumptions that are met and the concordance index. Any covariates that
 are determined to be not significant to the survival probability can be
 removed from the final CPH model.
@@ -412,12 +412,12 @@ ggsurvplot(example_curve,
 **Forest Plots**
 
 Forest plots can be used to visualize the effects of each covariate in
-the model on the hazard ratio. The resulting plot contains each
+the model has on the hazard ratio. The resulting plot contains each
 covariate on the y axis, with the estimated effect on the hazard ratio
 on the the x axis. The plot contains whiskers demonstrating a 95%
 confidence interval for the effect. A positive effect indicates a
-positive correlation with the hazard ratio and the higher the number the
-more severe the effect is on the hazard ratio.
+positive correlation with the hazard ratio where the higher the number
+is the more severe the effect on the hazard ratio.
 
 An example forest plot is shown below plotting the hazard ratio for each
 covariate in the model. The point represents the calculated hazard ratio
@@ -464,11 +464,11 @@ where,
 -   $t_x$ are the pairs tied to the predictor $x$ [@Therneau2017]
 
 The concordance index will produce a value between 0 and 1. A value of 1
-means all pairs are correctly ordered and a value 0 being the
+means all pairs are correctly ordered and a value of 0 being the
 alternative with no pairs correctly ordered. Any values between 0 and 1
 indicate how accurate the CPH model is with the data [@Therneau2017].
 
-### Survival Prediction
+### Survival Probability
 
 CPH can be used to predict the survival probability at a specific time
 $S(t|X=x)$, and the hazard ratio for an individual when compared to a
@@ -667,7 +667,7 @@ kable(as.data.frame(univ_results))
 
 Based on the above test, none of the covariates are statistically
 significant individually with all the data. As such, to determine the
-best model to use for this analysis, a forward and backward step-wise
+best model to use for this analysis, a forward and backward stepwise
 regression will be done to generate the models with the best Akaike
 Information Criterion (AIC) and Bayesian Information Criterion (BIC)
 values and compare the concordance values of those models with models
@@ -676,10 +676,9 @@ CPH model with the training data. The model with the highest concordance
 value, and therefore, the most accurate will be used for the analysis.
 
 The table below provides the model number, the covariates used, the AIC
-and BIC from the step-wise regression if applicable, and the concordance
-index. The concordance index generates a value to determine which model
-is the most accurate with the provided covariates. After determining the
-most accurate model, the CPH assumptions will be tested.
+and BIC from the stepwise regression if applicable, and the concordance
+index. After determining the most accurate model, the CPH assumptions
+will be tested.
 
 ```{r}
 surv_object <- Surv(data_grouped$time, data_grouped$status)
@@ -690,7 +689,6 @@ aic <- MASS::stepAIC(all_cov, trace = 0)
 n <- nrow(data_grouped)
 bic <- step(all_cov, direction = "both", k = log(n), trace = 0)
 
-train_sig <- lapply( univ_formulas, function(x){coxph(x, data = train_grouped)})
 
 cox1 <- coxph(data = data_grouped, surv_object ~ os1 + os2 + os3 + sm1 + sm2 + sm3 + sm4 + sm5 + sm6 + sm7 + sm8 + sm9 + sm10 + sm11 + sm12 + sm13 + sm14 + sm15 + sm16 + sm17 + sm18 + sm19 + sm20 + sm21)
 

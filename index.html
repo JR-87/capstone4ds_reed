@@ -3143,7 +3143,7 @@ window.Quarto = {
   <li><a href="#assumptions" id="toc-assumptions" class="nav-link" data-scroll-target="#assumptions">Assumptions</a></li>
   <li><a href="#model-visualization" id="toc-model-visualization" class="nav-link" data-scroll-target="#model-visualization">Model Visualization</a></li>
   <li><a href="#evaluation" id="toc-evaluation" class="nav-link" data-scroll-target="#evaluation">Evaluation</a></li>
-  <li><a href="#survival-prediction" id="toc-survival-prediction" class="nav-link" data-scroll-target="#survival-prediction">Survival Prediction</a></li>
+  <li><a href="#survival-probability" id="toc-survival-probability" class="nav-link" data-scroll-target="#survival-probability">Survival Probability</a></li>
   </ul></li>
   <li><a href="#analysis-and-results" id="toc-analysis-and-results" class="nav-link" data-scroll-target="#analysis-and-results">Analysis and Results</a>
   <ul class="collapse">
@@ -3247,7 +3247,7 @@ H(x) = \int_0^x h(u) du
 </section>
 <section id="covariate-selection" class="level3">
 <h3 class="anchored" data-anchor-id="covariate-selection">Covariate Selection</h3>
-<p>Depending on the study, there will be covariates that do not impact the probability of survival. Statistical methods such as the Wald Test can be used to determine which ones are statistically significant individually and may have an impact in a multivariate model. Generating a univariate CPH model for each covariate and using the Wald test with a significance level of <span class="math inline">\(\alpha = 0.05\)</span> will allow for determination of if a covariate is significant. Additional tests for models will involve using a step-wise regression and comparing the results based on the assumptions that are met and the concordance index. Any covariates that are determined to be not significant to the survival probability can be removed from the final CPH model.</p>
+<p>Depending on the study, there will be covariates that do not impact the probability of survival. Statistical methods such as the Wald Test can be used to determine which ones are statistically significant individually and may have an impact in a multivariate model. Generating a univariate CPH model for each covariate and using the Wald test with a significance level of <span class="math inline">\(\alpha = 0.05\)</span> will allow for determination of if a covariate is significant. Additional tests for models will involve using a stepwise regression and comparing the results based on the assumptions that are met and the concordance index. Any covariates that are determined to be not significant to the survival probability can be removed from the final CPH model.</p>
 </section>
 <section id="assumptions" class="level3">
 <h3 class="anchored" data-anchor-id="assumptions">Assumptions</h3>
@@ -3355,7 +3355,7 @@ H_1&amp;: \text{the log hazard ratio for each covariate does not remain constant
 </div>
 </div>
 <p><strong>Forest Plots</strong></p>
-<p>Forest plots can be used to visualize the effects of each covariate in the model on the hazard ratio. The resulting plot contains each covariate on the y axis, with the estimated effect on the hazard ratio on the the x axis. The plot contains whiskers demonstrating a 95% confidence interval for the effect. A positive effect indicates a positive correlation with the hazard ratio and the higher the number the more severe the effect is on the hazard ratio.</p>
+<p>Forest plots can be used to visualize the effects of each covariate in the model has on the hazard ratio. The resulting plot contains each covariate on the y axis, with the estimated effect on the hazard ratio on the the x axis. The plot contains whiskers demonstrating a 95% confidence interval for the effect. A positive effect indicates a positive correlation with the hazard ratio where the higher the number is the more severe the effect on the hazard ratio.</p>
 <p>An example forest plot is shown below plotting the hazard ratio for each covariate in the model. The point represents the calculated hazard ratio and the whiskers show the 95% confidence interval.</p>
 <div class="cell">
 <div class="cell-output-display">
@@ -3380,10 +3380,10 @@ C =\frac{c + \frac{t_x}{2}}{c + d + t_x}
 <li><span class="math inline">\(d\)</span> is the count of pairs that are discordant</li>
 <li><span class="math inline">\(t_x\)</span> are the pairs tied to the predictor <span class="math inline">\(x\)</span> <span class="citation" data-cites="Therneau2017">(<a href="#ref-Therneau2017" role="doc-biblioref">Therneau and Watson 2017</a>)</span></li>
 </ul>
-<p>The concordance index will produce a value between 0 and 1. A value of 1 means all pairs are correctly ordered and a value 0 being the alternative with no pairs correctly ordered. Any values between 0 and 1 indicate how accurate the CPH model is with the data <span class="citation" data-cites="Therneau2017">(<a href="#ref-Therneau2017" role="doc-biblioref">Therneau and Watson 2017</a>)</span>.</p>
+<p>The concordance index will produce a value between 0 and 1. A value of 1 means all pairs are correctly ordered and a value of 0 being the alternative with no pairs correctly ordered. Any values between 0 and 1 indicate how accurate the CPH model is with the data <span class="citation" data-cites="Therneau2017">(<a href="#ref-Therneau2017" role="doc-biblioref">Therneau and Watson 2017</a>)</span>.</p>
 </section>
-<section id="survival-prediction" class="level3">
-<h3 class="anchored" data-anchor-id="survival-prediction">Survival Prediction</h3>
+<section id="survival-probability" class="level3">
+<h3 class="anchored" data-anchor-id="survival-probability">Survival Probability</h3>
 <p>CPH can be used to predict the survival probability at a specific time <span class="math inline">\(S(t|X=x)\)</span>, and the hazard ratio for an individual when compared to a reference individual <span class="math inline">\(\frac{h(t|X=x)}{h(t|X=x_{ref}}\)</span> <span class="citation" data-cites="nahhas2025">(<a href="#ref-nahhas2025" role="doc-biblioref">Nahhas 2025</a>)</span>. The equation is</p>
 <p><span id="eq-survprob"><span class="math display">\[
 S(t) = e^{-H(t)}
@@ -3929,8 +3929,8 @@ S(t) = e^{-H(t)}
 </table>
 </div>
 </div>
-<p>Based on the above test, none of the covariates are statistically significant individually with all the data. As such, to determine the best model to use for this analysis, a forward and backward step-wise regression will be done to generate the models with the best Akaike Information Criterion (AIC) and Bayesian Information Criterion (BIC) values and compare the concordance values of those models with models that have covariates that were statistically significant when used in a CPH model with the training data. The model with the highest concordance value, and therefore, the most accurate will be used for the analysis.</p>
-<p>The table below provides the model number, the covariates used, the AIC and BIC from the step-wise regression if applicable, and the concordance index. The concordance index generates a value to determine which model is the most accurate with the provided covariates. After determining the most accurate model, the CPH assumptions will be tested.</p>
+<p>Based on the above test, none of the covariates are statistically significant individually with all the data. As such, to determine the best model to use for this analysis, a forward and backward stepwise regression will be done to generate the models with the best Akaike Information Criterion (AIC) and Bayesian Information Criterion (BIC) values and compare the concordance values of those models with models that have covariates that were statistically significant when used in a CPH model with the training data. The model with the highest concordance value, and therefore, the most accurate will be used for the analysis.</p>
+<p>The table below provides the model number, the covariates used, the AIC and BIC from the stepwise regression if applicable, and the concordance index. After determining the most accurate model, the CPH assumptions will be tested.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -3942,15 +3942,14 @@ S(t) = e^{-H(t)}
 <span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>n <span class="ot">&lt;-</span> <span class="fu">nrow</span>(data_grouped)</span>
 <span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>bic <span class="ot">&lt;-</span> <span class="fu">step</span>(all_cov, <span class="at">direction =</span> <span class="st">&quot;both&quot;</span>, <span class="at">k =</span> <span class="fu">log</span>(n), <span class="at">trace =</span> <span class="dv">0</span>)</span>
 <span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>train_sig <span class="ot">&lt;-</span> <span class="fu">lapply</span>( univ_formulas, <span class="cf">function</span>(x){<span class="fu">coxph</span>(x, <span class="at">data =</span> train_grouped)})</span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>cox1 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="at">data =</span> data_grouped, surv_object <span class="sc">~</span> os1 <span class="sc">+</span> os2 <span class="sc">+</span> os3 <span class="sc">+</span> sm1 <span class="sc">+</span> sm2 <span class="sc">+</span> sm3 <span class="sc">+</span> sm4 <span class="sc">+</span> sm5 <span class="sc">+</span> sm6 <span class="sc">+</span> sm7 <span class="sc">+</span> sm8 <span class="sc">+</span> sm9 <span class="sc">+</span> sm10 <span class="sc">+</span> sm11 <span class="sc">+</span> sm12 <span class="sc">+</span> sm13 <span class="sc">+</span> sm14 <span class="sc">+</span> sm15 <span class="sc">+</span> sm16 <span class="sc">+</span> sm17 <span class="sc">+</span> sm18 <span class="sc">+</span> sm19 <span class="sc">+</span> sm20 <span class="sc">+</span> sm21)</span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>cox2 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="at">data =</span> data_grouped, surv_object <span class="sc">~</span> os3 <span class="sc">+</span> sm3 <span class="sc">+</span> sm4 <span class="sc">+</span> sm5 <span class="sc">+</span> sm8 <span class="sc">+</span> sm9 <span class="sc">+</span> sm15 <span class="sc">+</span> sm16 <span class="sc">+</span> sm17 <span class="sc">+</span> sm18 <span class="sc">+</span> sm20)</span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>cox3 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="at">data =</span> data_grouped, surv_object <span class="sc">~</span> os3 <span class="sc">+</span> sm3 <span class="sc">+</span> sm4 <span class="sc">+</span> sm8 <span class="sc">+</span> sm9 <span class="sc">+</span> sm15 <span class="sc">+</span> sm18)</span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>cox4 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="at">data =</span> data_grouped, surv_object <span class="sc">~</span> os3 <span class="sc">+</span> sm13 <span class="sc">+</span> sm14 <span class="sc">+</span> sm19)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>cox1 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="at">data =</span> data_grouped, surv_object <span class="sc">~</span> os1 <span class="sc">+</span> os2 <span class="sc">+</span> os3 <span class="sc">+</span> sm1 <span class="sc">+</span> sm2 <span class="sc">+</span> sm3 <span class="sc">+</span> sm4 <span class="sc">+</span> sm5 <span class="sc">+</span> sm6 <span class="sc">+</span> sm7 <span class="sc">+</span> sm8 <span class="sc">+</span> sm9 <span class="sc">+</span> sm10 <span class="sc">+</span> sm11 <span class="sc">+</span> sm12 <span class="sc">+</span> sm13 <span class="sc">+</span> sm14 <span class="sc">+</span> sm15 <span class="sc">+</span> sm16 <span class="sc">+</span> sm17 <span class="sc">+</span> sm18 <span class="sc">+</span> sm19 <span class="sc">+</span> sm20 <span class="sc">+</span> sm21)</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>cox2 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="at">data =</span> data_grouped, surv_object <span class="sc">~</span> os3 <span class="sc">+</span> sm3 <span class="sc">+</span> sm4 <span class="sc">+</span> sm5 <span class="sc">+</span> sm8 <span class="sc">+</span> sm9 <span class="sc">+</span> sm15 <span class="sc">+</span> sm16 <span class="sc">+</span> sm17 <span class="sc">+</span> sm18 <span class="sc">+</span> sm20)</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>cox3 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="at">data =</span> data_grouped, surv_object <span class="sc">~</span> os3 <span class="sc">+</span> sm3 <span class="sc">+</span> sm4 <span class="sc">+</span> sm8 <span class="sc">+</span> sm9 <span class="sc">+</span> sm15 <span class="sc">+</span> sm18)</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>cox4 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(<span class="at">data =</span> data_grouped, surv_object <span class="sc">~</span> os3 <span class="sc">+</span> sm13 <span class="sc">+</span> sm14 <span class="sc">+</span> sm19)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <div class="cell">
