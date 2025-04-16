@@ -118,22 +118,6 @@ There are four assumptions for CPH:
         constant at all times [@Bustan2018]
 :::
 
-## Visualization
-
-The two common model visualizations are:
-
-::: incremental
--   Kaplan-Meier Survival Curve
-
-    -   Demonstrates the time where the event being modeled is expected
-        to occur [@klein2005]
-
--   Forest Plots
-
-    -   Visualizes the effects of each covariate in the model on the
-        hazard ratio
-:::
-
 ## Evaluation and Survival Probability
 
 ::: incremental
@@ -322,10 +306,198 @@ plot_model(cox1.1,
   xlab(label = "Estimated Effect on Hazard Ratio")
 ```
 
-## Checking Assumptions
+## Checking Assumptions {.scrollable}
 
-## Model Results
+::: panel-tabset
+#### Independence
+
+-   This assumption is met as the survival times for each individual
+    engine in the data is independent of each other
+
+#### Non-informative Censoring
+
+-   This assumption is met as knowing there is censored data does not
+    provide any new information about the survival probability
+
+#### Linearity Assumption
+
+-   This assumption is tested by looking at the Martingale residuals
+    (Martingale Residuals = Observed Events - Expected Events) and
+    determining if there is a slope of zero
+
+-   Based on the below plots, this assumption is met.
+
+```{r}
+martingale <- resid(cox1.1, type = "martingale")
+
+par(mfrow = c(4,4),
+      mar = c(2,2,4,1))
+
+plot(data_grouped$os1, martingale, main = "Martingale Residuals: os1")
+abline(h = 0, col = "red")
+
+plot(data_grouped$os2, martingale, main = "Martingale Residuals: os2")
+abline(h = 0, col = "red")
+
+plot(data_grouped$os3, martingale, main = "Martingale Residuals: os3")
+abline(h = 0, col = "red")
+
+plot(data_grouped$sm1, martingale, main = "Martingale Residuals: sm1")
+abline(h = 0, col = "red")
+
+plot(data_grouped$sm2, martingale, main = "Martingale Residuals: sm2")
+abline(h = 0, col = "red")
+
+plot(data_grouped$sm3, martingale, main = "Martingale Residuals: sm3")
+abline(h = 0, col = "red")
+
+plot(data_grouped$sm4, martingale, main = "Martingale Residuals: sm4")
+abline(h = 0, col = "red")
+
+plot(data_grouped$sm5, martingale, main = "Martingale Residuals: sm5")
+abline(h = 0, col = "red")
+
+plot(data_grouped$sm6, martingale, main = "Martingale Residuals: sm6")
+abline(h = 0, col = "red")
+
+plot(data_grouped$sm7, martingale, main = "Martingale Residuals: sm7")
+abline(h = 0, col = "red")
+
+plot(data_grouped$sm8, martingale, main = "Martingale Residuals: sm8")
+abline(h = 0, col = "red")
+
+plot(data_grouped$sm9, martingale, main = "Martingale Residuals: sm9")
+abline(h = 0, col = "red")
+
+plot(data_grouped$sm10, martingale, main = "Martingale Residuals: sm10")
+abline(h = 0, col = "red")
+
+plot(data_grouped$sm11, martingale, main = "Martingale Residuals: sm11")
+abline(h = 0, col = "red")
+
+plot(data_grouped$sm12, martingale, main = "Martingale Residuals: sm12")
+abline(h = 0, col = "red")
+
+plot(data_grouped$sm13, martingale, main = "Martingale Residuals: sm13")
+abline(h = 0, col = "red")
+
+plot(data_grouped$sm14, martingale, main = "Martingale Residuals: sm14")
+abline(h = 0, col = "red")
+
+plot(data_grouped$sm15, martingale, main = "Martingale Residuals: sm15")
+abline(h = 0, col = "red")
+
+plot(data_grouped$sm17, martingale, main = "Martingale Residuals: sm17")
+abline(h = 0, col = "red")
+
+plot(data_grouped$sm18, martingale, main = "Martingale Residuals: sm18")
+abline(h = 0, col = "red")
+
+plot(data_grouped$sm20, martingale, main = "Martingale Residuals: sm20")
+abline(h = 0, col = "red")
+
+plot(data_grouped$sm21, martingale, main = "Martingale Residuals: sm21")
+abline(h = 0, col = "red")
+```
+
+#### Proportional Hazards
+
+-   This assumption is tested by looking at the scaled Schoenfeld
+    partial residuals (the value of the covariate - the expected value
+    of the covariate at the time of failure) and examining the p-value
+
+-   Based on the below table and plots, this assumption is met
+
+```{r}
+cph_ph <- cox.zph(cox1.1) %>%
+  pluck("table") %>%
+  as.data.frame() %>%
+  tibble::rownames_to_column("variable") %>%
+  as_tibble()
+temp <- cph_ph %>% filter(variable %in% c("os1", "os2", "sm1", "sm2", "GLOBAL"))
+kable(temp, format = "markdown")
+
+create_ph_plots <- function(coxmodel, row, col){
+  # Function takes argument that is a cox model from coxph()
+  
+  phresults <- cox.zph(coxmodel)
+
+  # Define dimensions of visual
+  par(mfrow = c(row, col),
+      mar = c(2,2,4,1))
+
+
+  # Loop through each covariate creating a plot and adding it to the phplot list
+  for (i in 1:(length(phresults$table[,1])-1)){
+    phplots <- list()
+    phplots[i] <- plot(phresults[i], # Create plot for each iteration
+                       main = rownames(phresults$table)[i]) # Title of each plot is the rowname from coxmodel$table
+  
+  }
+  mtext("Schoenfeld Residuals vs. Time for Covariates", side = 3, line = -1.5, outer = TRUE, cex = 1) # Title for Visual
+  par(mfrow = c(1,1)) # Reset plotting area
+}
+
+create_ph_plots(cox1.1, 3, 5)
+
+```
+:::
+
+## Model Results {.scrollable}
+
+::: panel-tabset
+#### Evaluation
+
+-   The CPH model was determined to be a valid model and has a
+    concordance index of `{r} ci`
+
+#### Calculations
+
+-   Using the model, we can generate the coefficients and calculate the
+    hazard rate, the cumulative hazard value, and the survival
+    probability
+
+```{r}
+#| fig-align: center
+data_grouped_reduced <- data_grouped %>% select(id, time, os1, os2, os3, sm1, sm2, sm3, sm4, sm5, sm6, sm7, sm8, sm9, sm10, sm11, sm12, sm13, sm14, sm15, sm17, sm18, sm20, sm21, status)
+
+
+data_grouped_reduced$HazardRate <- predict(cox1.1,
+        newdata = data_grouped_reduced,
+        type = "risk")
+
+data_grouped_reduced$SurvivalProbability <- predict(cox1.1, type = "survival", newdata = data_grouped_reduced)
+
+print_data <- data_grouped_reduced %>% select(id, time, status, HazardRate, SurvivalProbability)
+
+kable(head(print_data, n = 5), format = "markdown")
+
+sf <- survfit(cox1.1)
+
+ggsurvplot(fit = sf,
+           data = data_grouped_reduced, risk.table = TRUE, fun = "cumhaz")$plot +
+  ggtitle('Cumulative Hazard Over Time')
+
+survtimes <- data.frame(Percent = c("100% Survival", "75% Survival,", "50% Survival", "25% Survival", "10% Survival"),
+                        Time = c(sf$time[sf$lower < 1][1], 
+                                    sf$time[sf$lower < .75][1], 
+                                    sf$time[sf$lower < .5][1], 
+                                    sf$time[sf$lower < .25][1], 
+                                    sf$time[sf$lower < .1][1]))
+
+ggsurvplot(fit = sf, data = data_grouped_reduced)$plot +
+  ggtitle('Survival Probability Over Time')
+
+```
+:::
 
 ## Conclusion
+
+-   Based on the model, NASA should not use their engines after 128
+    iterations have passed
+
+```{r}
+kable(survtimes, format = "markdown")
+```
 
 ## References

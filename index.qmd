@@ -766,21 +766,23 @@ After determining the model to use with the covariates, the CPH
 assumptions need to be tested to confirm the model is a valid CPH model.
 The model may have a high concordance index, but it may not be valid for
 CPH to use to predict the survival probability. If any of the
-assumptions for the model are not true, the model will need to be
+assumptions for the model are not met, the model will need to be
 modified.
 
 **Independence Assumption**
 
-The survival times for each individual engine in the training data are
+The survival times for each individual engine in the data are
 independent of each other. The failure of one engine does not impact the
 failure of another so this assumption is met.
 
 **Non-informative Censoring Assumption**
 
-The training dataset does not contain censored data as the documentation
-available at the dataset’s source clarifies all engines in the training
-data have experienced the desired event of failure at the end of each
-time series. As such, this assumption is met.
+While the data that was pulled from the training set does not include
+censored data, all of the data from the testing dataset is censored as
+those engines had not experienced failure in the study time period.
+However, it is known that those engines will experience failure at some
+point and knowing those engines are censored does not provide any new
+information. As such, this assumption is met.
 
 **Linearity Assumption**
 
@@ -996,7 +998,7 @@ hazard value is the total hazard accumulated for the subject over time
 and is used to estimate the risk for the subject at a point in time. The
 engines that have higher hazard rates or higher cumulative hazard values
 are at a greater risk of experiencing failure. The below table provides
-the hazard rate and suvivial probability for the first 10 engines in the
+the hazard rate and survival probability for the first 10 engines in the
 dataset.
 
 ```{r}
@@ -1045,7 +1047,7 @@ The implications of an engine failure are severe, as failure can lead to
 injury or death and the loss of millions of dollars. As such,
 understanding when an engine will fail allows for maintenance to occur
 before negative impacts occur. While CPH does not allow for the
-prediction of specific failure times, it does allow for the creation
+prediction of specific failure times, it does allow for the creation of
 confidence intervals which can be used to gain an understanding of when
 engines are most likely to fail. The table below displays the percent of
 survival at the lower end of the confidence interval to exercise
