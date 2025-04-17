@@ -51,9 +51,9 @@ researchers the ability to generate predictions on the individuals who
 are at the greatest risk of losing their lives due to an illness. While
 the medical world is the most obvious use of survival predictions, the
 same methods can be applied to predicting bank failure, the survival
-probablity of machines, machinery maintenance timelines, and insurance
+probability of machines, machinery maintenance timelines, and insurance
 likelihood of payouts. There are various survival methods that can be
-examined, including Cox proportional hazards model which will be
+examined, including the Cox proportional hazards model, which will be
 examined in this paper.
 
 Cox proportional hazards (CPH) models are statistical regression models
@@ -68,71 +68,73 @@ are capable of dealing with survival data that contains censored data as
 well [@Seung2023]. Censored data is when the information about an
 individual in a study is only known for a certain period of time, such
 as the length of the study [@klein2005]. The models also have the
-advantage of being semi-parametric which allows more flexibility as
+advantage of being semi-parametric, which allows more flexibility as
 compared to other models [@Ming-Chiang2014].
 
 As mentioned, CPH is used in various fields, primarily the health
 industry, but the usage of the model does not come without challenges. A
 COVID-19 study done using data from a Pakistani hospital noted that the
-model was limited due to the recovery possibility of COVID-19 patients
+model was limited due to the recovery possibility of COVID-19 patients,
 as CPH assumes as time goes on, the survival probability will approach
 zero with no survivors. Though CPH was not the best model for this
 study, the results of the model were that individuals who were
 asymptomatic and young had a higher chance of surviving the virus
 [@asghar2024]. In 2024, a study was done in the US on the relationship
 between chest pain occurring and mortality of the person experiencing
-chest pain using CPH. A response to that study was written that provided
-the limitations of CPH with the biggest concern being the assumption of
-constant hazards ratio that CPH relies on for the model. In the heart
-study, the effect of Triglyceride-Glucose was assumed to be a constant,
-but is actually a value that fluctuates over time along with an
-individual's body weight and blood glucose levels. As such, the model
-would struggle to predict correctly the effect of Triglyceride-Glucose
-given the violation of the constant hazards ratio [@jiang2024].
+chest pain using CPH. A response to that study demonstrated the various
+limitations of CPH, with the primary concern being the constant hazards
+ratio assumption that CPH relies on. In the heart study, the effect of
+triglyceride-glucose was assumed to be a constant, but it is actually a
+value that fluctuates over time along with an individual's body weight
+and blood glucose levels. As such, the model would struggle to predict
+correctly the effect of triglyceride-glucose given the violation of the
+constant hazards ratio [@jiang2024].
 
 An additional limitation of CPH comes from the data in the covariates
 selected and how they can become biased. Two studies done using UK
 health data demonstrated how bias can impact the values for the
-covariates when relying on patient submitted information. The first was
+covariates when relying on patient-submitted information. The first was
 a study on the connection between salt intake and the development of
-anxiety or depression after 14.5 years [@wang2025] and the second was a
+anxiety or depression after 14.5 years [@wang2025], and the second was a
 study on the association between postpartum depression and the
 development of two or more chronic diseases [@zhang2025]. Both of those
-studies relied on patient submitted health data and survey responses
-that were supplemented with death records and other accessible health
-records thus creating a possible bias in their data which could
-negatively influence their model as their covariates may not have
-accurately reflected the true data. These articles provide examples of
-the care that needs to be taken when working with CPH models.
+studies relied on patient-submitted health data and survey responses
+supplemented with death records and other accessible health records.
+This created a possible bias in their data that may have negatively
+influenced their model as their collected data may not accurately
+reflect the true data. These articles provide examples of the care that
+needs to be taken when working with CPH models.
 
 While health care is the dominant field in which CPH is used, a study in
 2021 provides an example of using CPH in insurance fields. An insurance
 company in the Czech Republic provides policies for certain illness
-events until the event occurs when the insured will receive money and
-their contract is complete. To assist the company with predicting if an
+events, with the insured receiving money when the event occurs, which
+concludes the contract. To assist the company with predicting if an
 individual will have one of the illness events occur, a model using CPH
 was generated using gender, age, and region as the covariates
 [@zapletal2021]. A study in 2023 focused on the length of productive
 life of female Floridian goats to determine the factors that would
-impact the longevity of the goats. CPH was used to determine that the
-age of first kidding and the specific herd impacts the length of
-productive life of the goats [@ziadi2023]. Both of these studies provide
-examples of the reaches of CPH models outside the health industry.
+impact the longevity of the goats. CPH was used to determine that both
+the age at first birth and the specific herd the female goat belonged to
+impacts the length of productive life [@ziadi2023]. Both of these
+studies provide examples of the reaches of CPH models outside the health
+industry.
 
-CPH has the capability to be applied to many fields, though it poses
-some limitations. The constant hazards ratio and determining how to
-censor data are two concerns that can lead to limitations in using CPH
-for models. In addition, the necessity of a time to event value within
-the data source is something that needs to be taken into consideration
-when choosing to use CPH. Without that value, using CPH as a survival
-model will not be the appropriate method to take with that particular
-data. This value is also what makes CPH a prime modeling candidate with
-health data as health metrics frequently have a time component to them,
-especially when comparing someone over a period of time in a health
-study as is done with medications and the development of cancer or other
+While CPH can be applied across various fields for survival probability
+modeling, the method does have elements that may limit its accuracy that
+must be addressed. Two such elements are the constant hazards ratio and
+the censoring of data, as both can lead to limited accuracy. In
+addition, the necessity of a time-to-event value within the data source
+is something that needs to be considered when choosing to use CPH.
+Without that value, using CPH as a survival model will not be the
+appropriate method to take with that particular data. This value is also
+what makes CPH a prime modeling candidate with health data, as health
+metrics frequently have a time component to them. This is frequently
+seen when comparing someone over a period of time in a health study, as
+is done with medications and the development of cancer or other
 illnesses. However, while the usage of CPH is clear in the medical
 field, this paper will demonstrate using CPH within the field of
-mechanics and remaining useful life of a machine.
+mechanics and survival probability metrics of a machine.
 
 ## Methods
 
@@ -160,7 +162,7 @@ The function is used to describe how the chance of experiencing the
 event changes with time and only has the requirement of being
 non-negative [@klein2005].
 
-CPH then uses both functions to develop it's own model, specifically by
+CPH then uses both functions to develop its own model, specifically by
 adapting the hazard function. Since CPH is a proportional hazard model,
 the hazard function is adapted to deal with the relationship between
 time to event and the explanatory variables [@klein2005]. It can be
@@ -183,8 +185,7 @@ CPH is considered a proportional hazards model due to the hazard ratio
 between two individuals being a constant value. The ratio of the hazard
 function for an individual with $\mathbf{Z}$ covariates where
 $Z_k = z+1$ and for an individual with $\mathbf{Z}^*$ covariates where
-$Z_k = z$ with all other predictors are fixed [@nahhas2025] is defined
-as
+$Z_k = z$ with all other predictors fixed [@nahhas2025] is defined as
 
 $$
 \frac{h(t|\mathbf{Z})}{h(t|\mathbf{Z}^*)} = \frac{h_0(t)\text{exp}[\sum_{k=1}^p \beta_k Z_k]}{h_0(t)\text{exp}[\sum_{k=1}^p \beta_k Z^*_k]} = \text{exp}[\sum_{k=1}^p \beta_k(Z_k - Z_k^*)]
@@ -216,7 +217,7 @@ purposes.
 ### Covariate Selection
 
 Depending on the study, there will be covariates that do not impact the
-probability of survival. Statistical methods such as the Wald Test can
+probability of survival. Statistical methods such as the Wald test can
 be used to determine which ones are statistically significant
 individually and may have an impact in a multivariate model. Generating
 a univariate CPH model for each covariate and using the Wald test with a
@@ -247,12 +248,12 @@ proportional hazards assumption.
 
 CPH assumes that the survival times of observed subjects are independent
 of each other. This is similar to most regression models, though CPH
-does not assume that the residuals of the model be normally distributed
+does not assume that the residuals of the model are normally distributed
 or have constant variance [@nahhas2025].
 
 **Non-informative Censoring Assumption**
 
-CPH assumes that censoring is non-informative which means that each
+CPH assumes that censoring is non-informative, which means that each
 subject has the same risk of experiencing the event regardless of one of
 them being censored. Thus, the knowledge of censoring does not result in
 any new information being provided [@nahhas2025].
@@ -263,24 +264,24 @@ CPH assumes the relationship between covariates and the outcome is a
 linear relationship [@nahhas2025]. For CPH, the outcome for that
 relationship is the log of the hazard rate. This assumption is checked
 visually using the Martingale residuals for each covariate
-[@nahhas2025]. Martingale residuals are a type of residuals used in
-survival analysis that show the discrepancy between the observed and the
-expected number of events. The equation is $$
+[@nahhas2025]. Martingale residuals are a type of residual used in
+survival analysis that shows the discrepancy between the observed and
+the expected number of events. The equation is $$
 \begin{align*}
 \text{Martingale Residuals} = \text{Observed Events} - \text{Expected Events}
 \end{align*}
 $$
 
-The resulting residuals are examined visually and if they are linear and
-appear to have a slope of zero, the linearity assumption is not violated
-[@Amini2015]. If a model is being generated with multiple covariates,
-multiple Martingale residual plots will need to be generated in order to
-verify this assumption for each covariate.
+The resulting residuals are examined visually, and if they are linear
+and appear to have a slope of zero, the linearity assumption is not
+violated [@Amini2015]. If a model is being generated with multiple
+covariates, multiple Martingale residual plots will need to be generated
+in order to verify this assumption for each covariate.
 
 Below is an example plot showing Martingale residuals plotted for a
 covariate being tested. From the plot, it is visually clear that the
 residuals are linear and appear to have a slope of zero. For this
-covariate then, the linearity assumption has not been violated.
+covariate, the linearity assumption has not been violated.
 
 ```{r,echo=FALSE}
 example_martingale <- resid(example_coxmodel, type = "martingale")
@@ -294,11 +295,11 @@ abline(h = 0, col = "red")
 
 **Proportional Hazards Assumption**
 
-The major assumption for CPH is the proportional hazards (PH) assumption
-which states that the ratio of hazard rates for any two subjects must be
-constant at all times. This means the effect of the covariates must be
-constant over time [@Bustan2018]. To test this assumption, the
-hypothesis test below is used: $$
+The major assumption for CPH is the proportional hazards (PH)
+assumption, which states that the ratio of hazard rates for any two
+subjects must be constant at all times. This means the effect of the
+covariates must be constant over time [@Bustan2018]. To test this
+assumption, the hypothesis test below is used: $$
 \begin{align*}
 H_0&: \text{the log hazard ratio for each covariate remains constant over time.} \\
 H_1&: \text{the log hazard ratio for each covariate does not remain constant over time}
@@ -309,8 +310,8 @@ To generate the p-value for the hypothesis test, the scaled Schoenfeld
 partial residuals are calculated for each covariate. The Schoenfeld
 partial residuals are the difference between the value of the covariate
 and the expected value of the covariate at the time of failure
-[@klein2005]. If the global p-value is $< 0.05$, than the model has at
-least one covariate that violates the PH assumption and each individual
+[@klein2005]. If the global p-value is $< 0.05$, then the model has at
+least one covariate that violates the PH assumption, and each individual
 covariate p-value will need to be checked. If the global p-value is
 $> 0.05$, then the PH assumption holds for all covariates [@nahhas2025].
 To visually confirm the PH assumption, the plot of the scaled Schoenfeld
@@ -318,11 +319,11 @@ partial residuals for each covariate should be a horizontal line
 [@harrison2021].
 
 Violations of the PH assumption can be dealt with in several ways. If
-the covariate is categorical, one way is to stratify the covariate which
-will generate a separate baseline hazard function for each level of the
-covariate [@harrison2021]. This removes the PH assumption for that
-covariate, though it will still be assumed for all other covariates in
-each level of the stratification [@nahhas2025]. If the covariate is
+the covariate is categorical, one way is to stratify the covariate,
+which will generate a separate baseline hazard function for each level
+of the covariate [@harrison2021]. This removes the PH assumption for
+that covariate, though it will still be assumed for all other covariates
+in each level of the stratification [@nahhas2025]. If the covariate is
 continuous, one way is to add in a function of time based on the shape
 of the hazard ratio plot. This replaces the model's time coefficient
 with a function of time as it assumes the covariate varies either
@@ -331,7 +332,7 @@ linearly or non-linearly with time [@nahhas2025].
 Below is an example plot demonstrating scaled Schoenfeld partial
 residuals plotted against time to test the proportional hazards
 assumption. While there is some curvature in the line, the residuals are
-roughly horizontal indicating proportional hazard over time for this
+roughly horizontal, indicating proportional hazard over time for this
 covariate.
 
 ```{r, echo = FALSE}
@@ -361,9 +362,9 @@ kable(ph_tibble, format = "markdown")
 
 ### Model Visualization
 
-Two common model visualizations used for CPH is the forest plot and the
+Two common model visualizations used for CPH are the forest plot and the
 Kaplan-Meier survival curve. The Kaplan-Meier curve assists in
-visualizing the initial survival model for the data while the forest
+visualizing the initial survival model for the data, while the forest
 plot assists in visualizing the hazard ratio after generating a model.
 
 **Kaplan Meier Survival Curve**
@@ -383,20 +384,19 @@ $$ {#eq-km} where,
 -   $Y_i$ is the number of individuals who are risk at time $t_i$
     [@klein2005]
 
-KM is a non-parametric estimate which means it makes no assumption of
+KM is a non-parametric estimate, which means it makes no assumption of
 the shape of the base survival function [@nahhas2025] and is considered
-to be well defined up until the largest observed study time $t_{max}$
+to be well defined up until the largest observed study time, $t_{max}$
 [@klein2005]. The survival curve provides a visualization of the KM
-estimator and are important when modeling survival data because it
-demonstrates the time where the event being modeled is expected to
-occur.
+estimator and is important when modeling survival data because it
+demonstrates the time when the event being modeled is expected to occur.
 
 Below is an example survival curve showing survival probabilities over
-time. The line represents the median survival probability with the red
+time. The line represents the median survival probability, with the red
 area around it showing the 95% confidence interval for the values. The
-curve can be interpreted as showing the probability of event would be
-expected to happen around a time of 300 where the survival probability
-is below 50% [@Kuitunen2021].
+curve can be interpreted as showing the probability of an event that
+would be expected to happen around a time of 300, where the survival
+probability is below 50% [@Kuitunen2021].
 
 ```{r, echo=FALSE}
 example_curve <- survfit(example_coxmodel)
@@ -411,17 +411,17 @@ ggsurvplot(example_curve,
 
 **Forest Plots**
 
-Forest plots can be used to visualize the effects of each covariate in
-the model has on the hazard ratio. The resulting plot contains each
-covariate on the y axis, with the estimated effect on the hazard ratio
-on the the x axis. The plot contains whiskers demonstrating a 95%
+Forest plots can be used to visualize the effects each covariate in the
+model has on the hazard ratio. The resulting plot contains each
+covariate on the y-axis, with the estimated effect on the hazard ratio
+on the the x-axis. The plot contains whiskers demonstrating a 95%
 confidence interval for the effect. A positive effect indicates a
-positive correlation with the hazard ratio where the higher the number
-is the more severe the effect on the hazard ratio.
+positive correlation with the hazard ratio, where the higher the number
+is, the more severe the effect on the hazard ratio.
 
-An example forest plot is shown below plotting the hazard ratio for each
-covariate in the model. The point represents the calculated hazard ratio
-and the whiskers show the 95% confidence interval.
+An example forest plot is shown below, plotting the hazard ratio for
+each covariate in the model. The point represents the calculated hazard
+ratio, and the whiskers show the 95% confidence interval.
 
 ```{r, echo=FALSE,warning=FALSE}
 forest <- coxph(example_surv_object ~ age + sex, data = lung)
@@ -440,16 +440,16 @@ plot_model(forest,
 ### Evaluation
 
 Evaluation of the accuracy of the CPH model is done using the
-concordance index which is used to measure the amount of agreement
+concordance index, which is used to measure the amount of agreement
 between two variables. Specifically, the value looks at concordant pairs
-and disconcordant pairs. A concordant pair is when either $x_i < x_j$
-and $y_i < y_j$ or $x_i > x_j$ and $y_i > y_j$. A discordant pair is
-when either $x_i$ or $y_i$ are not in the same place such as $x_i < x_j$
-but $y_j < y_i$ [@Therneau2017]. In terms of survival, this can be
-thought of as examining when the failure event occurs. If two subjects,
-A and B, are compared with subject A having a higher risk, the pair
-would be considered concordant if subject A does have the failure event
-occur before subject B.
+and discordant pairs. A concordant pair is when either $x_i < x_j$ and
+$y_i < y_j$ or $x_i > x_j$ and $y_i > y_j$. A discordant pair is when
+either $x_i$ or $y_i$ are not in the same place, such as $x_i < x_j$ but
+$y_j < y_i$ [@Therneau2017]. In terms of survival, this can be thought
+of as examining when the failure event occurs. If two subjects, A and B,
+are compared, with subject A having a higher risk, the pair would be
+considered concordant if subject A does have the failure event occur
+before subject B.
 
 The equation for concordance with CPH is
 
@@ -464,9 +464,9 @@ where,
 -   $t_x$ are the pairs tied to the predictor $x$ [@Therneau2017]
 
 The concordance index will produce a value between 0 and 1. A value of 1
-means all pairs are correctly ordered and a value of 0 being the
-alternative with no pairs correctly ordered. Any values between 0 and 1
-indicate how accurate the CPH model is with the data [@Therneau2017].
+means all pairs are correctly ordered, and a value of 0 means none of
+the pairs are correctly ordered. Any values between 0 and 1 indicate how
+accurate the CPH model is with the data [@Therneau2017].
 
 ### Survival Probability
 
@@ -486,7 +486,7 @@ assumed the event has not occurred. If the resulting probability is less
 than 50%, it is assumed the event has occurred. It is also possible to
 generate a plot of the estimated survival curves for all values of $t$
 that are desired. However, CPH is not able to predict the specific time
-the event is going to occur which is considered a limitation of the
+the event is going to occur, which is considered a limitation of the
 model.
 
 ## Analysis and Results
@@ -497,27 +497,27 @@ Though CPH is typically used with health data, it does have applications
 in other fields. This paper will study the survival probability of a
 NASA aircraft engine using data provided by NASA for the study on
 propagation modeling [@saxena2008]. In particular, this paper will be
-examining the data from the engine design two which has a training
+examining the data from the engine design two, which has a training
 dataset and a testing dataset.
 
 **Data Structure**
 
 Each engine in the NASA data has an unknown amount of wear,
-manufacturing variation, and sensor noise which will impact the survival
-time. In the training dataset, each engine is operating normally at the
-beginning of the time series, will develop a fault, and experience
-failure at some point. All engines will have failed in the training
-dataset. The conditions the engines are subjected to are represented by
-three operational setting fields and twenty-one sensor measurement
-fields. In the testing dataset, none of the engines have experienced
-failure [@saxena2008].
+manufacturing variation, and sensor noise, which will impact the
+survival time. In the training dataset, each engine is operating
+normally at the beginning of the time series, will develop a fault, and
+experience failure at some point. All engines will have failed in the
+training dataset. The conditions the engines are subjected to are
+represented by three operational setting fields and twenty-one sensor
+measurement fields. In the testing dataset, none of the engines have
+experienced failure [@saxena2008].
 
 A column indicating status is needed for both the training and testing
 datasets. The value 0 will be used to indicate if the machine is still
 working and the value 1 will be used for the last cycle before the
 engine fails. Both values will appear in the training dataset as all
 engines in that dataset will eventually fail. The testing dataset will
-only have the value of 0 as none of the machines have failed in that
+only have the value of 0, as none of the machines have failed in that
 dataset.
 
 The table below shows the structure for the combined training and
@@ -545,14 +545,14 @@ kable(head(data_all, n = 5), format = "markdown", caption = 'NASA Aircraft Engin
 
 **Data Visualization**
 
-There are 519 engines in the combined data with 260 engines in the
+There are 519 engines in the combined data, with 260 engines in the
 training data and 259 engines in the testing data. The below metrics are
-generated using the training data as that data contains no censored
+generated using the training data, as that data contains no censored
 data. The histogram shows that the survival times of the engines are
-normally distributed and the box plot shows there six outliers in the
-dataset. The engines have a median survival time of 199 cycles with a
-standard deviation of 46.78. The maximum number of cycles an engine
-lasted was 378 while the minimum number of cycles an engine lasted was
+normally distributed, and the box plot shows there are six outliers in
+the dataset. The engines have a median survival time of 199 cycles with
+a standard deviation of 46.78. The maximum number of cycles an engine
+lasted was 378, while the minimum number of cycles an engine lasted was
 128. Since the testing data contains all censored data, the basic
 metrics were not generated.
 
@@ -621,9 +621,9 @@ autoplot(km_fit) + theme_bw()
 Generation of the CPH models will be done using R, specifically the R
 package `survival`. To generate the CPH model with properly formatted
 survival data, a survival object is created by running
-`Surv(time, event)` where `time` is the time field and `event` is the
+`Surv(time, event)`, where `time` is the time field and `event` is the
 event field. To generate the actual model, the survival object is then
-applied to the function `coxph(survival object ~ x, data)` where `x`
+applied to the function `coxph(survival object ~ x, data)`, where `x`
 represents the covariate(s) and `data` is the survival data that is
 being modeled [@R-base].
 
@@ -670,10 +670,9 @@ significant individually with all the data. As such, to determine the
 best model to use for this analysis, a forward and backward stepwise
 regression will be done to generate the models with the best Akaike
 Information Criterion (AIC) and Bayesian Information Criterion (BIC)
-values and compare the concordance values of those models with models
-that have covariates that were statistically significant when used in a
-CPH model with the training data. The model with the highest concordance
-value, and therefore, the most accurate will be used for the analysis.
+values. This method produced three possible models. The fourth model in
+the below table used covariates that were determined to significant with
+the training data only.
 
 The table below provides the model number, the covariates used, the AIC
 and BIC from the stepwise regression if applicable, and the concordance
@@ -715,20 +714,21 @@ kable(stepwise_results, format = "markdown")
 
 ```
 
-Based on the above model results, the model that has the highest
-concordance value is model 1 which has all of the covariates. However,
-before proceeding with that model, a test for linear dependency will be
-run to determine all covariates are linearly independent.
+In determining the best model for this data, it was determined that CPH
+is not the survival method that should be used on this data. By stepwise
+regression, the models with the lowest BIC and AIC should have been used
+in the following analysis; however, both models continuously failed the
+CPH assumptions. As such, the model for the following analysis will be
+model 1, which contained all covariates and had the highest concordance
+value.
 
-```{r}
-kable(alias(cox1), format = "markdown")
-```
-
-The above result indicates that sm19 needs to be removed from the model
-as it linearly dependent on another value. In addition, sm16 resulted in
-a possible infinite coefficient so that covariate has also been removed.
-The proceeding analysis will be done using model 1 without sm16 and
-sm19. The below tables provide the summary values from the model.
+While model 1 does have initially contain all 24 covariates, there are
+two that will need to be removed before proceeding with the analysis due
+to infinite coefficients and linearly dependence. The covariate sm19 is
+linearly dependent on another value, and the covariate sm16 resulted in
+a possible infinite coefficient. The following analysis will be done
+using model 1 without sm16 and sm19. The below tables provide the
+summary values from the model.
 
 ```{r}
 cox1.1 <- coxph(data = data_grouped, surv_object ~ os1 + os2 + os3 + sm1 + sm2 + sm3 + sm4 + sm5 + sm6 + sm7 + sm8 + sm9 + sm10 + sm11 + sm12 + sm13 + sm14 + sm15 + sm17 + sm18 + sm20 + sm21)
@@ -773,29 +773,29 @@ modified.
 
 The survival times for each individual engine in the data are
 independent of each other. The failure of one engine does not impact the
-failure of another so this assumption is met.
+failure of another, so this assumption is met.
 
 **Non-informative Censoring Assumption**
 
 While the data that was pulled from the training set does not include
-censored data, all of the data from the testing dataset is censored as
+censored data, all of the data from the testing dataset is censored, as
 those engines had not experienced failure in the study time period.
 However, it is known that those engines will experience failure at some
-point and knowing those engines are censored does not provide any new
+point, and knowing those engines are censored does not provide any new
 information. As such, this assumption is met.
 
 **Linearity Assumption**
 
-To check the linearity assumption, the residuals of the model are needed
-which can be generated using the `resid` function in R and assigning the
-type to be martingale (`resid(type = "martingale")` ). This will create
-a vector of residuals that can be plotted against the range of values
-for each covariate.
+To check the linearity assumption, the residuals of the model are
+needed, which can be generated using the `resid` function in R and
+assigning the type to be martingale (`resid(type = "martingale")` ).
+This will create a vector of residuals that can be plotted against the
+range of values for each covariate.
 
-The plots of the Martingale residuals vs the range of values for each
-covariate is shown below. For each covariate, there is no clear slope
-indicating the linearity assumption is true for the covariates in the
-model.
+The plots of the Martingale residuals versus the range of values for
+each covariate are shown below. For each covariate, there is no clear
+slope indicating the linearity assumption is true for the covariates in
+the model.
 
 ```{r}
 martingale <- resid(cox1.1, type = "martingale")
@@ -875,19 +875,21 @@ abline(h = 0, col = "red")
 **Proportional Hazards Assumption**
 
 The `cox.zph` function can be used to check the proportional hazards
-assumption. As mentioned, the function calculates p values for each
+assumption. As mentioned, the function calculates p-values for each
 covariate. The global p-value will first be compared to $\alpha = 0.05$.
 If that p-value is $<\alpha$, then at least one covariate violates the
-PH assumption and the model will need to be adapted.
+PH assumption, and the model will need to be adapted.
 
 The output below shows the p-values for the hypothesis test and
 Schoenfeld residuals. The global p-value is $> \alpha$ so none of the
 covariates violates the PH assumption on a global level. Examining each
 individual covariate through both p-values and the plot of the
 Schoenfeld residuals does show that os1, os3, sm13, and sm14 violate the
-PH assumption. To ensure the model is as accurate as possible, the model
-will addapted without those covariates and the global p-values will be
-compared.
+PH assumption. However, since the global p-value does show that the
+model itself meets the PH assumption, the analysis will proceed with
+those covariates. If the global p-value had not met the assumption,
+further analysis of those four covariates would need to be completed in
+order to met the PH assumption.
 
 ```{r}
 cph_ph <- cox.zph(cox1.1) %>%
@@ -924,60 +926,16 @@ create_ph_plots <- function(coxmodel, row, col){
 create_ph_plots(cox1.1, 3, 5)
 ```
 
-### Adjusting the Model
-
-The results of the above assumptions demonstrated that several
-covariates violate the PH assumption on a local level. As such, the
-model will be recreated by removing the covariates that violate the PH
-assumption. After recreating the model, the PH assumption and the
-linearity assumption will be tested again with the new PH global p-value
-being compared to the original model's global p-value.
-
-The table below demonstrates the new model information which has
-eighteen covariates: os2, sm1 - sm12, sm15, sm17, sm18, sm20, sm21.
-
-```{r}
-cox1.2 <- coxph(data = data_grouped, surv_object ~ os2 + sm1 + sm2 + sm3 + sm4 + sm5 + sm6 + sm7 + sm8 + sm9 + sm10 + sm11 + sm12 + sm15 + sm17 + sm18 + sm20 + sm21)
-
-kable(tidy(cox1.2), format = "markdown")
-g <- glance(cox1.2)
-g <- g %>% select(n, nevent, concordance, std.error.concordance, logLik, statistic.log, p.value.log, statistic.wald, p.value.wald, statistic.sc, p.value.sc)
-kable(g, format = "markdown")
-
-```
-
-The output below shows the p-values for the new model's PH assumption
-hypothesis test and Schoenfeld residuals. The global p-value is now
-$< \alpha$ so the PH assumption has not been met for the new model. As
-such,, the remaining analysis will be done using the first model that
-had a global p-value $>\alpha$ which has all but two covariates.
-
-```{r, echo = FALSE}
-ph_2 <- cox.zph(cox1.2) %>%
-  pluck("table") %>%
-  as.data.frame() %>%
-  tibble::rownames_to_column("variable") %>%
-  as_tibble()
-
-kable(ph_2, format = "markdown")
-
-create_ph_plots(cox1.2, 3, 5)
-
-```
-
-If the new model had passed the PH assumption, the linearity assumption
-would have been checked again.
-
 ### Model Results
 
 **Evaluation**
 
-The CPH model that was selected has a concordance value of `{r} ci`
-which indicates that it is more than 50% accurate in predicting the
-survival of the machines. However, this model is not completely accurate
-so there is an expectation of some error in the model survival
-probabilities which will lead to caution in providing results in
-application settings.
+The CPH model that was selected has a concordance value of
+`{r} round(ci, 2)`, which indicates that it is more than 50% accurate in
+predicting the survival of the machines. However, this model is not
+completely accurate, so there is an expectation of some error in the
+model survival probabilities which will lead to caution in providing
+results in application settings.
 
 **Calculations**
 
@@ -991,15 +949,15 @@ kable(coef, format = "markdown")
 ```
 
 The coefficients above can be used to calculate the hazard rate
-[@eq-hazardrate], the cumulative hazard value[@eq-cumulativehr], and the
-survival probability [@eq-survprob]. The hazard rate at time $t$ will be
-calculated for each engine at the engines max time value. The cumulative
-hazard value is the total hazard accumulated for the subject over time
-and is used to estimate the risk for the subject at a point in time. The
-engines that have higher hazard rates or higher cumulative hazard values
-are at a greater risk of experiencing failure. The below table provides
-the hazard rate and survival probability for the first 10 engines in the
-dataset.
+([@eq-hazardrate]), the cumulative hazard value ([@eq-cumulativehr]),
+and the survival probability ([@eq-survprob]). The hazard rate at time
+$t$ will be calculated for each engine at the engine's max time value.
+The cumulative hazard value is the total hazard accumulated for the
+subject over time and is used to estimate the risk for the subject at a
+point in time. The engines that have higher hazard rates or higher
+cumulative hazard values are at a greater risk of experiencing failure.
+The below table provides the hazard rate and survival probability for
+the first 10 engines in the dataset.
 
 ```{r}
 data_grouped_reduced <- data_grouped %>% select(id, time, os1, os2, os3, sm1, sm2, sm3, sm4, sm5, sm6, sm7, sm8, sm9, sm10, sm11, sm12, sm13, sm14, sm15, sm17, sm18, sm20, sm21, status)
@@ -1048,7 +1006,7 @@ injury or death and the loss of millions of dollars. As such,
 understanding when an engine will fail allows for maintenance to occur
 before negative impacts occur. While CPH does not allow for the
 prediction of specific failure times, it does allow for the creation of
-confidence intervals which can be used to gain an understanding of when
+confidence intervals, which can be used to gain an understanding of when
 engines are most likely to fail. The table below displays the percent of
 survival at the lower end of the confidence interval to exercise
 caution.
@@ -1059,18 +1017,18 @@ kable(survtimes, format = "markdown")
 ```
 
 The lower end of the confidence interval for survival probability is
-shown to hold stable at 100% until `t = 128` with a gradual decrease
-afterwards. Half of the engines are expected to survive until `t = 245`
+shown to hold stable at 100% until `t = 128`, with a gradual decrease
+afterwards. Half of the engines are expected to survive until `t = 245`,
 and 90% of the engines are expected to fail at `t = 347`. These results
 can be viewed in both the above survival graph and the cumulative hazard
 plot which shows a low hazard until `t = 128` with a gradual increase.
 
-Based on these findings, the model can be applied by recommending for
-NASA not to use engines after 128 iterations have passed. The engines
+Based on these findings, the model can be applied by recommending that
+NASA not use engines after 128 iterations have passed. The engines
 should undergo routine maintenance beforehand and should be evaluated to
 ensure the probability of survival calculated by the model remains at
 100%. All engines should be equipped with sensors for the covariates
-used and readings should be applied to the model after each use of the
+used, and readings should be applied to the model after each use of the
 engine. The engine should be removed from service if the resulting
 survival probability is less than 100%.
 
