@@ -1045,7 +1045,7 @@ combinations of covariates, the final c-index that was calculated is the
 highest value achieved where the covariates were able to meet the
 proportional hazards model.
 
-As discussed during earlier, a weakness of the Cox proportional hazards
+As discussed previously, a weakness of the Cox proportional hazards
 model is the necessity to meet the proportional hazards assumption.
 Given the difficulty of meeting the PH assumption, a different survival
 analysis would have better suited this dataset.
